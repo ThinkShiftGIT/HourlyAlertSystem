@@ -3,18 +3,8 @@ waitress
 APScheduler
 tenacity
 feedparser
-python-dateutil
 beautifulsoup4
 requests
 prometheus-client
 sentry-sdk
-python-json-logger
-
-# Ensure a prebuilt wheel for tokenizers (avoids Rust build)
-tokenizers==0.13.3
-
-# A recent Transformers release compatible with that Tokenizers wheel
-transformers==4.21.0
-
-# CPU-only PyTorch (available on PyPI)
-torch==2.0.1
+vaderSentiment
