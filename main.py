@@ -9,13 +9,16 @@ import re
 
 from collections import deque
 from datetime import datetime, timedelta
-from flask import Flask, jsonify
+from flask import Flask, jsonify, render_template_string
 from apscheduler.schedulers.background import BackgroundScheduler
 from tenacity import retry, stop_after_attempt, wait_exponential
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 # === Logging ===
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)-8s %(message)s")
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)-8s %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 # === Flask App ===
@@ -23,14 +26,17 @@ app = Flask(__name__)
 app.last_scan = None
 
 # === Environment Variables ===
-BOT_TOKEN             = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
-CHAT_IDS_RAW          = os.getenv("TELEGRAM_CHAT_IDS", "").strip()
-FINNHUB_API_KEY       = os.getenv("FINNHUB_API_KEY", "").strip()
-SENTIMENT_THRESHOLD   = float(os.getenv("SENTIMENT_THRESHOLD", "0.1"))  # for testing
+BOT_TOKEN             = os.getenv("TELEGRAM_BOT_TOKEN",     "").strip()
+CHAT_IDS_RAW          = os.getenv("TELEGRAM_CHAT_IDS",      "").strip()
+FINNHUB_API_KEY       = os.getenv("FINNHUB_API_KEY",        "").strip()
+SENTIMENT_THRESHOLD   = float(os.getenv("SENTIMENT_THRESHOLD", "0.1"))
 SCAN_INTERVAL_MINUTES = int(os.getenv("SCAN_INTERVAL_MINUTES", "5"))
-LIQUID_TICKERS        = os.getenv("LIQUID_TICKERS", "AAPL,TSLA,SPY,MSFT,AMD,GOOG").split(",")
+LIQUID_TICKERS        = os.getenv(
+    "LIQUID_TICKERS",
+    "AAPL,TSLA,SPY,MSFT,AMD,GOOG"
+).split(",")
 
-# Validate
+# Validate required vars
 missing = []
 if not BOT_TOKEN:       missing.append("TELEGRAM_BOT_TOKEN")
 if not CHAT_IDS_RAW:    missing.append("TELEGRAM_CHAT_IDS")
@@ -46,14 +52,14 @@ sent_hashes            = deque(maxlen=1000)
 sent_hashes_timestamps = {}
 sent_hashes_lock       = threading.Lock()
 
-option_cache           = {}
-option_cache_timestamps= {}
-option_cache_lock      = threading.Lock()
+option_cache            = {}
+option_cache_timestamps = {}
+option_cache_lock       = threading.Lock()
 
 # === Sentiment Analyzer ===
 analyzer = SentimentIntensityAnalyzer()
 
-# === Telegram ===
+# === Telegram Alert Helper ===
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
 def send_telegram_alert(message: str):
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
@@ -80,10 +86,12 @@ def get_option_data(ticker: str):
     """Returns (atm_strike, option_price) or (None,None)"""
     now = datetime.utcnow()
     with option_cache_lock:
-        if ticker in option_cache and now - option_cache_timestamps[ticker] < timedelta(minutes=15):
+        if (ticker in option_cache and
+            now - option_cache_timestamps[ticker] < timedelta(minutes=15)):
             return option_cache[ticker]
 
     try:
+        # Current price
         q = requests.get(
             f"https://finnhub.io/api/v1/quote?symbol={ticker}&token={FINNHUB_API_KEY}",
             timeout=5,
@@ -92,8 +100,9 @@ def get_option_data(ticker: str):
         if not price:
             raise ValueError("No current price")
 
+        # Option chain
         oc = requests.get(
-            f"https://finnhub.io/api/v1/stock/option-chain?symbol={ticker}&token={FINNHUB_API_KEY}", 
+            f"https://finnhub.io/api/v1/stock/option-chain?symbol={ticker}&token={FINNHUB_API_KEY}",
             timeout=5
         ).json()
 
@@ -108,7 +117,7 @@ def get_option_data(ticker: str):
 
         result = (best[0], best[1]) if best[0] is not None else (None, None)
         with option_cache_lock:
-            option_cache[ticker] = result
+            option_cache[ticker]            = result
             option_cache_timestamps[ticker] = now
         return result
 
@@ -121,14 +130,15 @@ def fetch_and_analyze_news():
     logger.info("Starting scan...")
     now = datetime.utcnow()
     sources = [
-        ("rss", "https://finance.yahoo.com/news/rssindex"),
-        ("finnhub", "https://finnhub.io/api/v1/news"),
+        ("rss",      "https://finance.yahoo.com/news/rssindex"),
+        ("finnhub",  "https://finnhub.io/api/v1/news"),
     ]
 
     for kind, url in sources:
         logger.info("Scanning %s feed", kind)
         articles = []
 
+        # RSS
         if kind == "rss":
             feed = feedparser.parse(url)
             for e in feed.entries:
@@ -145,10 +155,14 @@ def fetch_and_analyze_news():
                 content = f"{title} {summary}"
                 articles.append((title, content))
 
-        else:  # finnhub
+        # Finnhub JSON
+        else:
             for ticker in LIQUID_TICKERS:
                 try:
-                    r = requests.get(f"{url}?symbol={ticker}&token={FINNHUB_API_KEY}", timeout=5)
+                    r = requests.get(
+                        f"{url}?symbol={ticker}&token={FINNHUB_API_KEY}",
+                        timeout=5
+                    )
                     r.raise_for_status()
                     for item in r.json():
                         dt = datetime.utcfromtimestamp(item.get("datetime", 0))
@@ -161,6 +175,7 @@ def fetch_and_analyze_news():
                 except Exception as e:
                     logger.debug("Finnhub fetch for %s failed: %s", ticker, e)
 
+        # De-dupe & analyze
         for title, content in articles:
             h = hashlib.sha256(content.encode()).hexdigest()
             with sent_hashes_lock:
@@ -215,9 +230,38 @@ scheduler.start()
 logger.info("Scheduler started, every %d minutes", SCAN_INTERVAL_MINUTES)
 
 # === HTTP Endpoints ===
+
+# Inline HTML dashboard
 @app.route("/")
 def home():
-    return "✅ RealTimeTradeBot is running!"
+    html = """
+    <!DOCTYPE html>
+    <html lang="en">
+      <head>
+        <meta charset="utf-8"/>
+        <title>RealTimeTradeBot Dashboard</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 2rem; }
+          button { padding: 0.5rem 1rem; font-size: 1rem; }
+        </style>
+      </head>
+      <body>
+        <h1>✅ RealTimeTradeBot Dashboard</h1>
+        <p>Status: <strong>Healthy</strong></p>
+        <p>Last scan: <strong>{{ last_scan or "Never" }}</strong></p>
+        <button onclick="triggerScan()">Run Scan Now</button>
+        <script>
+          function triggerScan() {
+            fetch('/scan-now')
+              .then(r => r.text())
+              .then(alert)
+              .catch(console.error);
+          }
+        </script>
+      </body>
+    </html>
+    """
+    return render_template_string(html, last_scan=app.last_scan)
 
 @app.route("/health")
 def health():
@@ -238,4 +282,4 @@ def scan_now():
     return "On-demand scan triggered.", 200
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+    app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
