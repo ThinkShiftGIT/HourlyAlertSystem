@@ -1,82 +1,107 @@
-# RealTimeTradeBot 📈
+# 🚀 RealTimeTradeBot
 
-A real-time trading alert bot built with Python. It scrapes Yahoo Finance news, analyzes sentiment, detects high-probability opportunities, and sends alerts via Telegram.
+A real-time trading signal alert bot that monitors news headlines and sends option trade alerts via Telegram using sentiment analysis. Deployed on [Render](https://render.com/), this bot ensures consistent uptime and delivery with auto-restarts and web hosting.
 
----
+## 🔍 Features
 
-## 🚀 Live Demo
+- Monitors Yahoo Finance RSS feed for high-impact headlines
+- Analyzes sentiment using TextBlob
+- Detects mentions of highly liquid US stocks
+- Sends well-structured trade alerts via Telegram
+- Uses hashed headlines to avoid duplicate alerts
+- Runs continuously via Flask + Waitress on Render
 
-Deployed and running at:
-➡️ [https://realtimetradebot.onrender.com](https://realtimetradebot.onrender.com)
+## ⚙️ Technologies Used
 
----
-
-## 💡 Features
-
-- ✅ Real-time RSS news scanning (Yahoo Finance)
-- ✅ Sentiment analysis using TextBlob
-- ✅ Matches tickers against a list of highly liquid US stocks
-- ✅ Sends actionable alerts to Telegram
-- ✅ Includes trade direction, strike, expiration, and POP
-- ✅ Logs and tracks alerts to avoid duplicates
-- ✅ Hosted on Render with Flask + Waitress
-
----
-
-## 🛠️ Tech Stack
-
-- Python 3.11
-- Flask + Waitress (deployment)
-- Feedparser (news scraping)
+- Python 3
+- Flask (API keep-alive)
 - TextBlob (sentiment analysis)
-- Telegram Bot API (alerting)
-- Hosted on Render.com
+- Feedparser (RSS parsing)
+- Telegram Bot API (alert delivery)
+- Waitress (production WSGI server)
+- Hosted on [Render](https://render.com/)
 
----
+## 📦 Installation
 
-## 🧪 Setup & Run Locally
-
+Clone the repo:
 ```bash
 git clone https://github.com/ThinkShiftGIT/RealTimeTradeBot.git
 cd RealTimeTradeBot
+```
 
-# Install dependencies
+Install dependencies:
+```bash
 pip install -r requirements.txt
+```
 
-# Add secrets via .env or Render dashboard
-# TELEGRAM_BOT_TOKEN=your_bot_token
-# FINNHUB_API_KEY=your_finnhub_key (future integration)
+Create a `.env` or use secrets to store:
 
-# Run the bot
-python main.py
+```
+TELEGRAM_BOT_TOKEN=your_bot_token
+FINNHUB_API_KEY=your_finnhub_key  # Optional, for option data later
+```
+
+## 🚀 Deploying to Render
+
+1. Log in to [Render](https://render.com/)
+2. Create a new Web Service
+3. Connect your GitHub repo
+4. Use the following settings:
+   - Build command: `pip install -r requirements.txt`
+   - Start command: `python3 -m waitress --port=$PORT main:app`
+   - Environment Variables: Add your bot token and API keys
+5. Hit **Deploy**
+
+Live endpoint: [https://realtimetradebot.onrender.com](https://realtimetradebot.onrender.com)
+
+## 📡 Telegram Setup
+
+- Create a Telegram bot with [@BotFather](https://t.me/BotFather)
+- Get your bot token
+- Start a chat with your bot
+- Use this script to get your `chat_id`:
+
+```python
+import requests
+TOKEN = "YOUR_BOT_TOKEN"
+updates = requests.get(f"https://api.telegram.org/bot{TOKEN}/getUpdates").json()
+print(updates)
+```
+
+## 📈 Sample Alert
+
+```
+🚨 Market News Alert
+🕒 Date/Time: 2025-05-05 21:10 (UTC-5)
+📰 Headline: Apple to Boost AI Spend in 2025
+🔄 Impact: Bullish
+
+🎯 Trade Setup
+• Ticker: AAPL
+• Strategy: Long Call
+• Strike: ATM
+• Expiration: 2 weeks out
+• Est. Contract Price: ~$180
+• Reason: Strong sentiment from real-time news
+• POP: Likely >70% based on event-driven catalyst
+• Entry: ASAP
+• Exit Rule: 50% profit or 3 days before expiration
+
+🔔 Action: Monitor trade; follow-up alert if exit rule is triggered.
 ```
 
 ---
 
-## 📦 Deploy on Render
+## 💡 To-Do
 
-1. Fork or clone this repo
-2. Go to [https://dashboard.render.com](https://dashboard.render.com)
-3. Create a new **Web Service**
-4. Connect to your GitHub and pick this repo
-5. Set Build Command: `pip install -r requirements.txt`
-6. Set Start Command: `python3 -m waitress --port=$PORT main:app`
-7. Add your **Secrets** under Environment tab
+- Integrate real-time option data via Tradier
+- Add support for multiple Telegram chat IDs
+- Expand news sources (e.g., Twitter, earnings feeds)
 
----
+## 📜 License
 
-## 🧠 Roadmap
-
-- ✅ Real-time news scanning & alerting
-- 🔜 Tradier options chain integration
-- 🔜 Twitter finance sentiment feed
-- 🔜 Earnings calendar integration
-- 🔜 SQLite alert log for backtest & history
+MIT — free to use, modify, and share.
 
 ---
 
-## 👤 Author
-
-[ThinkShiftGIT](https://github.com/ThinkShiftGIT)
-
-Built with 💻 and 📊 in 2025
+Built with ❤️ by [ThinkShiftGIT](https://github.com/ThinkShiftGIT)
