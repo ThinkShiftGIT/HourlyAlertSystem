@@ -1,10 +1,10 @@
 Flask
-waitress
 APScheduler
 tenacity
 feedparser
-beautifulsoup4
 requests
+beautifulsoup4
+vaderSentiment
 prometheus-client
 sentry-sdk
-vaderSentiment
+waitress
