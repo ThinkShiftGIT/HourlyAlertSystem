@@ -105,6 +105,7 @@ hash_lock = threading.Lock()
 
 def is_duplicate_and_mark(hash_val: str) -> bool:
     with hash_lock:
+        # Prune older than 24h
         cutoff = time.time() - 86400
         for h, ts in list(sent_hashes.items()):
             if ts < cutoff:
@@ -115,7 +116,7 @@ def is_duplicate_and_mark(hash_val: str) -> bool:
         return False
 
 # === Option Data Caching ===
-option_cache: Dict[str, Tuple[Optional[int], Optional[float]]]] = {}
+option_cache: Dict[str, Tuple[Optional[int], Optional[float]]] = {}
 CACHE_TTL = 60  # seconds
 
 def get_option_data(ticker: str) -> Tuple[Optional[int], Optional[float]]:
@@ -125,12 +126,14 @@ def get_option_data(ticker: str) -> Tuple[Optional[int], Optional[float]]:
         if now - ts < CACHE_TTL:
             return data
     try:
-        quote_resp = requests.get(f"https://finnhub.io/api/v1/quote?symbol={ticker}&token={config.finnhub_api_key}")
+        quote_resp = requests.get(
+            f"https://finnhub.io/api/v1/quote?symbol={ticker}&token={config.finnhub_api_key}")
         quote = quote_resp.json()
         price = quote.get('c')
         if not price:
             raise ValueError('Invalid price')
-        chain_resp = requests.get(f"https://finnhub.io/api/v1/stock/option-chain?symbol={ticker}&token={config.finnhub_api_key}")
+        chain_resp = requests.get(
+            f"https://finnhub.io/api/v1/stock/option-chain?symbol={ticker}&token={config.finnhub_api_key}")
         oc = chain_resp.json()
         atm, opt_price, min_diff = None, None, float('inf')
         for contract in oc.get('data', []):
