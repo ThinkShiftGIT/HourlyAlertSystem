@@ -6,60 +6,80 @@ import feedparser
 import hashlib
 from textblob import TextBlob
 from flask import Flask
-from waitress import serve
 
-# === Flask app to keep alive ===
+# === Flask app to keep alive and serve test route ===
 app = Flask(__name__)
-
 
 @app.route('/')
 def home():
-    return "Bot is alive"
+    return "Real-Time Trade Alert Bot is alive!"
 
+@app.route('/test-alert')
+def test_alert():
+    test_message = f"""
+🚨 *Test Alert*
+🕒 Date/Time: {time.strftime('%Y-%m-%d %H:%M')} (UTC-5)
+📰 *Headline:* This is a manual test alert.
+🔄 *Impact:* Neutral
+
+🎯 *Trade Setup*
+• *Ticker:* TEST
+• *Strategy:* Long Call
+• *Strike:* ATM
+• *Expiration:* 2 weeks out
+• *Est. Contract Price:* ~$0.00
+• *Reason:* Manual system check
+• *POP:* N/A
+• *Entry:* N/A
+• *Exit Rule:* N/A
+
+🔔 *Action:* This is a test message. No trade needed.
+"""
+    send_telegram_alert(test_message)
+    return "✅ Test alert sent!"
 
 def run_server():
-    serve(app, host='0.0.0.0', port=8080)
-
+    from waitress import serve
+    serve(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
 
 def keep_alive():
-    thread = threading.Thread(target=run_server)
-    thread.start()
+    threading.Thread(target=run_server).start()
 
-
-# === Load env variables ===
+# === Environment setup ===
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-CHAT_ID = '1654552128'
+CHAT_IDS = os.getenv("TELEGRAM_CHAT_IDS", "").split(",")
 
-# === Highly liquid U.S. equities ===
+# === List of tickers to monitor ===
 liquid_tickers = [
-    'AAPL', 'TSLA', 'SPY', 'MSFT', 'AMD', 'GOOG', 'META', 'NVDA', 'NFLX',
-    'AMZN', 'BA', 'JPM', 'BAC', 'INTC', 'DIS'
+    'AAPL', 'TSLA', 'SPY', 'MSFT', 'AMD', 'GOOG', 'META',
+    'NVDA', 'NFLX', 'AMZN', 'BA', 'JPM', 'BAC', 'INTC', 'DIS'
 ]
 
-# === Track previously sent alerts using a hash set ===
 sent_hashes = set()
 
-
-# === Send message to Telegram ===
+# === Send message to all Telegram chat IDs ===
 def send_telegram_alert(message):
-    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-    data = {"chat_id": CHAT_ID, "text": message, "parse_mode": "Markdown"}
-    try:
-        requests.post(url, data=data)
-        print("✅ Alert sent.")
-    except Exception as e:
-        print(f"❌ Failed to send alert: {e}")
+    for chat_id in CHAT_IDS:
+        url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+        data = {
+            "chat_id": chat_id.strip(),
+            "text": message,
+            "parse_mode": "Markdown"
+        }
+        try:
+            requests.post(url, data=data)
+            print(f"✅ Alert sent to {chat_id.strip()}")
+        except Exception as e:
+            print(f"❌ Error sending alert to {chat_id.strip()}: {e}")
 
-
-# === Match ticker in news ===
+# === Identify matching ticker ===
 def match_ticker(text):
     for ticker in liquid_tickers:
         if ticker in text.upper():
             return ticker
     return None
 
-
-# === Alert format ===
+# === Format trade alert ===
 def send_trade_alert(ticker, headline, sentiment):
     direction = "Bullish" if sentiment > 0 else "Bearish"
     message = f"""
@@ -74,17 +94,16 @@ def send_trade_alert(ticker, headline, sentiment):
 • *Strike:* ATM
 • *Expiration:* 2 weeks out
 • *Est. Contract Price:* ~$180
-• *Reason:* Strong sentiment from real-time news
-• *POP:* Likely >70% based on event-driven catalyst
+• *Reason:* Strong real-time news sentiment
+• *POP:* Estimated >70% based on event-driven catalyst
 • *Entry:* ASAP
 • *Exit Rule:* 50% profit or 3 days before expiration
 
-🔔 *Action:* Monitor trade; follow-up alert if exit rule is triggered.
+🔔 *Action:* Monitor trade; alert will follow for exit if required.
 """
     send_telegram_alert(message)
 
-
-# === News fetch and analysis ===
+# === Check news feed for alerts ===
 def fetch_and_analyze_news():
     print("🔍 Scanning Yahoo Finance RSS...")
     feed = feedparser.parse("https://finance.yahoo.com/news/rssindex")
@@ -92,28 +111,25 @@ def fetch_and_analyze_news():
     for entry in feed.entries:
         title = entry.title
         summary = entry.get('summary', '')
-        content = f"{title} {summary}"
-        news_hash = hashlib.sha256(content.encode()).hexdigest()
+        full_text = f"{title} {summary}"
+        content_hash = hashlib.sha256(full_text.encode()).hexdigest()
 
-        # Skip if already alerted
-        if news_hash in sent_hashes:
+        if content_hash in sent_hashes:
             continue
 
-        sentiment_score = TextBlob(content).sentiment.polarity
+        sentiment_score = TextBlob(full_text).sentiment.polarity
         if abs(sentiment_score) >= 0.3:
-            matched_ticker = match_ticker(content)
-            if matched_ticker:
-                send_trade_alert(matched_ticker, title, sentiment_score)
-                sent_hashes.add(news_hash)
+            matched = match_ticker(full_text)
+            if matched:
+                send_trade_alert(matched, title, sentiment_score)
+                sent_hashes.add(content_hash)
 
-
-# === Run the bot ===
+# === App Runner ===
 def main():
     keep_alive()
     while True:
         fetch_and_analyze_news()
-        time.sleep(300)  # 5 minutes
-
+        time.sleep(300)  # every 5 minutes
 
 if __name__ == "__main__":
     main()
