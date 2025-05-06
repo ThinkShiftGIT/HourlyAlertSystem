@@ -41,7 +41,17 @@ jobs_running = Gauge('tradebot_jobs_running', 'Number of fetch jobs running')
 
 # === Environment Variables ===
 BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
-CHAT_IDS = os.getenv('TELEGRAM_CHAT_IDS', '').split(',')
+raw_ids = os.getenv('TELEGRAM_CHAT_IDS', '')
+CHAT_IDS = [cid.strip() for cid in raw_ids.split(',') if cid.strip()]
+if not CHAT_IDS:
+    logger.error("No valid TELEGRAM_CHAT_IDS set. Exiting.")
+    sys.exit(1)
+for cid in CHAT_IDS:
+    if not cid.isdigit():
+        logger.error(f"Invalid TELEGRAM_CHAT_ID: {cid}")
+        sys.exit(1)
+logger.info(f"Telegram chat IDs: {CHAT_IDS}")
+
 FINNHUB_API_KEY = os.getenv('FINNHUB_API_KEY')
 THRESHOLD = float(os.getenv('SENTIMENT_THRESHOLD', '0.1'))
 INTERVAL = int(os.getenv('SCAN_INTERVAL_MINUTES', '5'))
@@ -50,9 +60,9 @@ LIQUID_TICKERS = [t.strip().upper() for t in os.getenv(
     'AAPL,TSLA,SPY,MSFT,AMD,GOOG,META,NVDA,NFLX,AMZN'
 ).split(',')]
 
-# Validate
-if not BOT_TOKEN or not CHAT_IDS or not FINNHUB_API_KEY:
-    logger.error("Missing TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_IDS, or FINNHUB_API_KEY")
+# Validate critical vars
+if not BOT_TOKEN or not FINNHUB_API_KEY:
+    logger.error("Missing TELEGRAM_BOT_TOKEN or FINNHUB_API_KEY. Exiting.")
     sys.exit(1)
 
 # === Deduplication ===
@@ -61,8 +71,6 @@ hash_lock = threading.Lock()
 
 def is_duplicate(h):
     with hash_lock:
-        cutoff = datetime.utcnow() - timedelta(hours=24)
-        # no timestamp store; simple set expire on restart
         if h in sent_hashes:
             return True
         sent_hashes.add(h)
@@ -104,8 +112,12 @@ def health():
 
 @app.route('/test-alert')
 def test_alert():
-    send_telegram_alert("Test alert: bot is online.")
-    return "OK"
+    try:
+        send_telegram_alert("🚀 Test alert: bot is online.")
+        return "OK"
+    except Exception as e:
+        logger.exception("Test-alert failed")
+        return f"ERROR: {e}", 500
 
 
 def fetch_and_alert():
