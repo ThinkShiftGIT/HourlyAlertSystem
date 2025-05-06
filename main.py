@@ -47,7 +47,7 @@ if not CHAT_IDS:
     logger.error("No valid TELEGRAM_CHAT_IDS set. Exiting.")
     sys.exit(1)
 for cid in CHAT_IDS:
-    if not cid.isdigit():
+    if not cid.isdigit() and not (cid.startswith('-') and cid[1:].isdigit()):
         logger.error(f"Invalid TELEGRAM_CHAT_ID: {cid}")
         sys.exit(1)
 logger.info(f"Telegram chat IDs: {CHAT_IDS}")
@@ -69,7 +69,7 @@ if not BOT_TOKEN or not FINNHUB_API_KEY:
 sent_hashes = set()
 hash_lock = threading.Lock()
 
-def is_duplicate(h):
+def is_duplicate(h: str) -> bool:
     with hash_lock:
         if h in sent_hashes:
             return True
@@ -129,13 +129,26 @@ def test_alert():
         logger.exception("Test-alert failed")
         return f"ERROR: {e}", 500
 
+@app.route('/scan-now')
+def scan_now():
+    try:
+        fetch_and_alert()
+        return jsonify(
+            status="scanned",
+            last_scan=app.last_scan_time
+        )
+    except Exception as e:
+        logger.exception("Live scan failed")
+        return jsonify(error=str(e)), 500
+
+# === Core Fetch & Alert Logic ===
 def fetch_and_alert():
     jobs_running.inc()
     try:
         for src in news_sources:
             feed = feedparser.parse(src['url'])
-            for e in feed.entries[:10]:
-                content = f"{e.title} {e.get('summary','')}"
+            for entry in feed.entries:
+                content = f"{entry.title} {entry.get('summary','')}"
                 h = hashlib.sha256(content.encode()).hexdigest()
                 if is_duplicate(h):
                     continue
@@ -144,7 +157,11 @@ def fetch_and_alert():
                     continue
                 tickers = [t for t in LIQUID_TICKERS if t in content.upper()]
                 if tickers:
-                    msg = f"{e.title}\nSentiment: {score:.2f}\nTickers: {', '.join(tickers)}"
+                    msg = (
+                        f"🚨 {entry.title}\n"
+                        f"Sentiment: {score:.2f}\n"
+                        f"Tickers: {', '.join(tickers)}"
+                    )
                     send_telegram_alert(msg)
                 articles_processed.inc()
         app.last_scan_time = datetime.utcnow().isoformat()
@@ -154,11 +171,17 @@ def fetch_and_alert():
     finally:
         jobs_running.dec()
 
+# === Main Runner ===
 def main():
+    # Expose Prometheus metrics on port 8000
     start_http_server(8000)
+
+    # Schedule periodic scans
     scheduler = BackgroundScheduler()
     scheduler.add_job(fetch_and_alert, 'interval', minutes=INTERVAL)
     scheduler.start()
+
+    # Serve Flask via Waitress
     serve(app, host='0.0.0.0', port=int(os.getenv('PORT', '8080')))
 
 if __name__ == '__main__':
