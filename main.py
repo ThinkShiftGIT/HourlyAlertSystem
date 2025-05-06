@@ -9,7 +9,7 @@ import re
 
 from collections import deque
 from datetime import datetime, timedelta
-from flask import Flask, jsonify, render_template_string
+from flask import Flask, jsonify, render_template
 from apscheduler.schedulers.background import BackgroundScheduler
 from tenacity import retry, stop_after_attempt, wait_exponential
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
@@ -231,37 +231,10 @@ logger.info("Scheduler started, every %d minutes", SCAN_INTERVAL_MINUTES)
 
 # === HTTP Endpoints ===
 
-# Inline HTML dashboard
 @app.route("/")
 def home():
-    html = """
-    <!DOCTYPE html>
-    <html lang="en">
-      <head>
-        <meta charset="utf-8"/>
-        <title>RealTimeTradeBot Dashboard</title>
-        <style>
-          body { font-family: Arial, sans-serif; margin: 2rem; }
-          button { padding: 0.5rem 1rem; font-size: 1rem; }
-        </style>
-      </head>
-      <body>
-        <h1>✅ RealTimeTradeBot Dashboard</h1>
-        <p>Status: <strong>Healthy</strong></p>
-        <p>Last scan: <strong>{{ last_scan or "Never" }}</strong></p>
-        <button onclick="triggerScan()">Run Scan Now</button>
-        <script>
-          function triggerScan() {
-            fetch('/scan-now')
-              .then(r => r.text())
-              .then(alert)
-              .catch(console.error);
-          }
-        </script>
-      </body>
-    </html>
-    """
-    return render_template_string(html, last_scan=app.last_scan)
+    # Renders templates/index.html, injecting last_scan
+    return render_template("index.html", last_scan=app.last_scan)
 
 @app.route("/health")
 def health():
