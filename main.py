@@ -26,7 +26,7 @@ app.last_scan = None
 BOT_TOKEN             = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
 CHAT_IDS_RAW          = os.getenv("TELEGRAM_CHAT_IDS", "").strip()
 FINNHUB_API_KEY       = os.getenv("FINNHUB_API_KEY", "").strip()
-SENTIMENT_THRESHOLD   = float(os.getenv("SENTIMENT_THRESHOLD", "0.1"))  # lowered for testing
+SENTIMENT_THRESHOLD   = float(os.getenv("SENTIMENT_THRESHOLD", "0.1"))  # for testing
 SCAN_INTERVAL_MINUTES = int(os.getenv("SCAN_INTERVAL_MINUTES", "5"))
 LIQUID_TICKERS        = os.getenv("LIQUID_TICKERS", "AAPL,TSLA,SPY,MSFT,AMD,GOOG").split(",")
 
@@ -120,7 +120,6 @@ def get_option_data(ticker: str):
 def fetch_and_analyze_news():
     logger.info("Starting scan...")
     now = datetime.utcnow()
-    # define sources
     sources = [
         ("rss", "https://finance.yahoo.com/news/rssindex"),
         ("finnhub", "https://finnhub.io/api/v1/news"),
@@ -133,7 +132,6 @@ def fetch_and_analyze_news():
         if kind == "rss":
             feed = feedparser.parse(url)
             for e in feed.entries:
-                # published filter
                 published = e.get("published")
                 if published:
                     try:
@@ -163,12 +161,10 @@ def fetch_and_analyze_news():
                 except Exception as e:
                     logger.debug("Finnhub fetch for %s failed: %s", ticker, e)
 
-        # process articles
         for title, content in articles:
             h = hashlib.sha256(content.encode()).hexdigest()
             with sent_hashes_lock:
                 cutoff = now - timedelta(hours=24)
-                # prune old
                 for k in list(sent_hashes_timestamps):
                     if sent_hashes_timestamps[k] < cutoff:
                         sent_hashes_timestamps.pop(k, None)
