@@ -30,7 +30,7 @@ SENTIMENT_THRESHOLD   = float(os.getenv("SENTIMENT_THRESHOLD", "0.1"))  # lowere
 SCAN_INTERVAL_MINUTES = int(os.getenv("SCAN_INTERVAL_MINUTES", "5"))
 LIQUID_TICKERS        = os.getenv("LIQUID_TICKERS", "AAPL,TSLA,SPY,MSFT,AMD,GOOG").split(",")
 
-# === Validate ===
+# Validate
 missing = []
 if not BOT_TOKEN:       missing.append("TELEGRAM_BOT_TOKEN")
 if not CHAT_IDS_RAW:    missing.append("TELEGRAM_CHAT_IDS")
@@ -45,6 +45,7 @@ CHAT_IDS = [c.strip() for c in CHAT_IDS_RAW.split(",") if c.strip()]
 sent_hashes            = deque(maxlen=1000)
 sent_hashes_timestamps = {}
 sent_hashes_lock       = threading.Lock()
+
 option_cache           = {}
 option_cache_timestamps= {}
 option_cache_lock      = threading.Lock()
@@ -76,10 +77,12 @@ def match_ticker(text: str):
     return [t for t in LIQUID_TICKERS if re.search(rf"\b{re.escape(t)}\b", txt)]
 
 def get_option_data(ticker: str):
+    """Returns (atm_strike, option_price) or (None,None)"""
     now = datetime.utcnow()
     with option_cache_lock:
         if ticker in option_cache and now - option_cache_timestamps[ticker] < timedelta(minutes=15):
             return option_cache[ticker]
+
     try:
         q = requests.get(
             f"https://finnhub.io/api/v1/quote?symbol={ticker}&token={FINNHUB_API_KEY}",
@@ -87,7 +90,7 @@ def get_option_data(ticker: str):
         ).json()
         price = q.get("c") or 0
         if not price:
-            return None, None
+            raise ValueError("No current price")
 
         oc = requests.get(
             f"https://finnhub.io/api/v1/stock/option-chain?symbol={ticker}&token={FINNHUB_API_KEY}", 
@@ -113,79 +116,98 @@ def get_option_data(ticker: str):
         logger.warning("get_option_data(%s) failed: %s", ticker, e)
         return None, None
 
-# === Core Logic with Debug Logs ===
+# === Core Logic ===
 def fetch_and_analyze_news():
     logger.info("Starting scan...")
     now = datetime.utcnow()
+    # define sources
+    sources = [
+        ("rss", "https://finance.yahoo.com/news/rssindex"),
+        ("finnhub", "https://finnhub.io/api/v1/news"),
+    ]
 
-    # 1) RSS feed
-    feed = feedparser.parse("https://finance.yahoo.com/news/rssindex")
-    articles = []
-    for e in feed.entries:
-        title = e.get("title", "")
-        summary = e.get("summary", "")
-        articles.append((title, f"{title} {summary}"))
+    for kind, url in sources:
+        logger.info("Scanning %s feed", kind)
+        articles = []
 
-    # 2) Finnhub
-    for ticker in LIQUID_TICKERS:
-        try:
-            r = requests.get(f"https://finnhub.io/api/v1/news?symbol={ticker}&token={FINNHUB_API_KEY}", timeout=5)
-            r.raise_for_status()
-            for item in r.json():
-                dt = datetime.utcfromtimestamp(item.get("datetime", 0))
-                if now - dt > timedelta(hours=24):
+        if kind == "rss":
+            feed = feedparser.parse(url)
+            for e in feed.entries:
+                # published filter
+                published = e.get("published")
+                if published:
+                    try:
+                        dt = datetime.strptime(published, "%a, %d %b %Y %H:%M:%S %z")
+                        if now - dt.replace(tzinfo=None) > timedelta(hours=24):
+                            continue
+                    except:
+                        pass
+                title   = e.get("title", "")
+                summary = e.get("summary", "")
+                content = f"{title} {summary}"
+                articles.append((title, content))
+
+        else:  # finnhub
+            for ticker in LIQUID_TICKERS:
+                try:
+                    r = requests.get(f"{url}?symbol={ticker}&token={FINNHUB_API_KEY}", timeout=5)
+                    r.raise_for_status()
+                    for item in r.json():
+                        dt = datetime.utcfromtimestamp(item.get("datetime", 0))
+                        if now - dt > timedelta(hours=24):
+                            continue
+                        title   = item.get("headline", "")
+                        summary = item.get("summary", "")
+                        content = f"{title} {summary}"
+                        articles.append((title, content))
+                except Exception as e:
+                    logger.debug("Finnhub fetch for %s failed: %s", ticker, e)
+
+        # process articles
+        for title, content in articles:
+            h = hashlib.sha256(content.encode()).hexdigest()
+            with sent_hashes_lock:
+                cutoff = now - timedelta(hours=24)
+                # prune old
+                for k in list(sent_hashes_timestamps):
+                    if sent_hashes_timestamps[k] < cutoff:
+                        sent_hashes_timestamps.pop(k, None)
+                        try: sent_hashes.remove(k)
+                        except: pass
+
+                if h in sent_hashes:
                     continue
-                headline = item.get("headline", "")
-                summary = item.get("summary", "")
-                articles.append((headline, f"{headline} {summary}"))
-        except Exception as e:
-            logger.debug("Finnhub fetch for %s failed: %s", ticker, e)
+                sent_hashes.append(h)
+                sent_hashes_timestamps[h] = now
 
-    # process
-    for title, content in articles:
-        h = hashlib.sha256(content.encode()).hexdigest()
-        with sent_hashes_lock:
-            cutoff = now - timedelta(hours=24)
-            # prune old
-            for k in list(sent_hashes_timestamps):
-                if sent_hashes_timestamps[k] < cutoff:
-                    sent_hashes_timestamps.pop(k, None)
-                    try: sent_hashes.remove(k)
-                    except: pass
-            if h in sent_hashes:
-                continue
-            sent_hashes.append(h)
-            sent_hashes_timestamps[h] = now
+            score   = analyzer.polarity_scores(content[:512])["compound"]
+            tickers = match_ticker(content)
+            logger.info("DEBUG: '%s' | score=%.2f | tickers=%s", title, score, tickers)
 
-        # score
-        score = analyzer.polarity_scores(content[:512])["compound"]
-        tickers = match_ticker(content)
-        logger.info("DEBUG: '%s' | score=%0.2f | tickers=%s", title, score, tickers)
-
-        if abs(score) < SENTIMENT_THRESHOLD or not tickers:
-            continue
-
-        direction = "Bullish" if score > 0 else "Bearish"
-        for t in tickers:
-            s, p = get_option_data(t)
-            if s is None or p is None:
-                logger.info("Skipping %s: no option data", t)
+            if abs(score) < SENTIMENT_THRESHOLD or not tickers:
                 continue
 
-            msg = (
-                f"🚨 *Market News Alert*\n"
-                f"🕒 {datetime.now():%Y-%m-%d %H:%M}\n"
-                f"📰 {title}\n"
-                f"🔄 {direction}\n\n"
-                f"🎯 *Trade Setup*\n"
-                f"• Ticker: {t}\n"
-                f"• Side: {direction}\n"
-                f"• Strike: {s}\n"
-                f"• Expiration: 2 weeks out\n"
-                f"• Est Price: ${p:.2f}\n"
-                f"• Sentiment score: {score:.2f}\n"
-            )
-            send_telegram_alert(msg)
+            direction = "Bullish" if score > 0 else "Bearish"
+            for t in tickers:
+                s, p = get_option_data(t)
+                if s is None or p is None:
+                    logger.info("Skipping %s: no option data", t)
+                    continue
+
+                msg = (
+                    f"🚨 *Market News Alert*\n"
+                    f"🕒 {datetime.now():%Y-%m-%d %H:%M}\n"
+                    f"📰 {title}\n"
+                    f"🔄 {direction}\n\n"
+                    f"🎯 *Trade Setup*\n"
+                    f"• Ticker: {t}\n"
+                    f"• Side: {direction}\n"
+                    f"• Strike: {s}\n"
+                    f"• Expiration: 2 weeks out\n"
+                    f"• Est Price: ${p:.2f}\n"
+                    f"• Sentiment score: {score:.2f}\n"
+                )
+                send_telegram_alert(msg)
 
     app.last_scan = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     logger.info("Scan complete.")
@@ -220,6 +242,4 @@ def scan_now():
     return "On-demand scan triggered.", 200
 
 if __name__ == "__main__":
-    # Serve with waitress when deployed; for local testing you could use app.run()
-    from waitress import serve
-    serve(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
