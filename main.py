@@ -18,6 +18,7 @@ from bs4 import BeautifulSoup
 from transformers import pipeline
 from prometheus_client import Counter, Gauge, start_http_server
 import sentry_sdk
+from waitress import serve
 
 # === Configuration ===
 @dataclass
@@ -104,7 +105,6 @@ hash_lock = threading.Lock()
 
 def is_duplicate_and_mark(hash_val: str) -> bool:
     with hash_lock:
-        # Prune older than 24h
         cutoff = time.time() - 86400
         for h, ts in list(sent_hashes.items()):
             if ts < cutoff:
@@ -115,7 +115,7 @@ def is_duplicate_and_mark(hash_val: str) -> bool:
         return False
 
 # === Option Data Caching ===
-option_cache: Dict[str, Tuple[float, Tuple[Optional[int], Optional[float]]]] = {}
+option_cache: Dict[str, Tuple[Optional[int], Optional[float]]]] = {}
 CACHE_TTL = 60  # seconds
 
 def get_option_data(ticker: str) -> Tuple[Optional[int], Optional[float]]:
@@ -125,17 +125,19 @@ def get_option_data(ticker: str) -> Tuple[Optional[int], Optional[float]]:
         if now - ts < CACHE_TTL:
             return data
     try:
-        quote = requests.get(f"https://finnhub.io/api/v1/quote?symbol={ticker}&token={config.finnhub_api_key}").json()
+        quote_resp = requests.get(f"https://finnhub.io/api/v1/quote?symbol={ticker}&token={config.finnhub_api_key}")
+        quote = quote_resp.json()
         price = quote.get('c')
         if not price:
             raise ValueError('Invalid price')
-        oc = requests.get(f"https://finnhub.io/api/v1/stock/option-chain?symbol={ticker}&token={config.finnhub_api_key}").json()
-        atm, opt_price, diff = None, None, float('inf')
+        chain_resp = requests.get(f"https://finnhub.io/api/v1/stock/option-chain?symbol={ticker}&token={config.finnhub_api_key}")
+        oc = chain_resp.json()
+        atm, opt_price, min_diff = None, None, float('inf')
         for contract in oc.get('data', []):
             for call in contract.get('options', {}).get('CALL', []):
-                d = abs(call['strike'] - price)
-                if d < diff:
-                    diff, atm = d, call['strike']
+                diff = abs(call['strike'] - price)
+                if diff < min_diff:
+                    min_diff, atm = diff, call['strike']
                     opt_price = call.get('lastPrice') or call.get('ask')
         result = (atm, opt_price)
         option_cache[ticker] = (now, result)
@@ -149,7 +151,7 @@ def get_option_data(ticker: str) -> Tuple[Optional[int], Optional[float]]:
 try:
     sentiment_analyzer = pipeline('sentiment-analysis', model='ProsusAI/finbert')
 except Exception as e:
-    logger.error(f"Sentiment load failed: {e}")
+    logger.error(f"Sentiment model load failed: {e}")
     sys.exit(1)
 
 # === Telegram Alert ===
@@ -175,15 +177,15 @@ def send_telegram_alert(message: str):
 
 # === Ticker Matching ===
 def match_ticker(text: str) -> List[str]:
-    txt = text.upper()
-    return [t for t in config.liquid_tickers if f" {t} " in f" {txt} "]
+    txt = f" {text.upper()} "
+    return [t for t in config.liquid_tickers if f" {t} " in txt]
 
 # === Content Fetching ===
 def get_full_article(url: str) -> str:
     try:
-        r = requests.get(url, timeout=5)
-        r.raise_for_status()
-        soup = BeautifulSoup(r.text, 'html.parser')
+        resp = requests.get(url, timeout=5)
+        resp.raise_for_status()
+        soup = BeautifulSoup(resp.text, 'html.parser')
         paras = soup.find_all('p')
         return ' '.join(p.get_text(strip=True) for p in paras) or ''
     except Exception as e:
@@ -195,20 +197,19 @@ def get_full_article(url: str) -> str:
 def fetch_and_analyze_news():
     jobs_running.inc()
     try:
-        for src in [
-            {'type': 'rss', 'url': 'https://finance.yahoo.com/news/rssindex', 'name': 'Yahoo'},
+        sources = [
+            {'type': 'rss', 'url': 'https://finance.yahoo.com/news/rssindex', 'name': 'Yahoo Finance'},
             {'type': 'rss', 'url': 'https://feeds.reuters.com/reuters/businessNews', 'name': 'Reuters'},
             {'type': 'finnhub', 'url': 'https://finnhub.io/api/v1/news', 'name': 'Finnhub'}
-        ]:
-            logging.info(f"Scanning {src['name']}")
+        ]
+        for src in sources:
+            logger.info(f"Scanning {src['name']}")
             articles = []
             if src['type'] == 'rss':
                 feed = feedparser.parse(src['url'])
                 for e in feed.entries:
                     dt = e.get('published') or e.get('updated')
-                    try:
-                        when = dateparser.parse(dt) if dt else None
-                    except: when = None
+                    when = dateparser.parse(dt) if dt else None
                     if when and (time.time() - when.timestamp()) > 86400:
                         continue
                     content = f"{e.title} {e.get('summary','')} {get_full_article(e.link)}"
@@ -216,20 +217,20 @@ def fetch_and_analyze_news():
             else:
                 for t in config.liquid_tickers:
                     resp = requests.get(f"{src['url']}?symbol={t}&token={config.finnhub_api_key}")
+                    resp.raise_for_status()
                     for item in resp.json():
                         when = dateparser.parse(item.get('datetime', ''), default=None)
                         if not when or (time.time() - when.timestamp()) > 86400:
                             continue
-                        txt = f"{item['headline']} {item.get('summary','')}"
-                        articles.append((item['headline'], txt))
-
+                        content = f"{item['headline']} {item.get('summary','')}"
+                        articles.append((item['headline'], content))
             for title, content in articles:
                 articles_processed.inc()
                 h = hashlib.sha256(content.encode()).hexdigest()
                 if is_duplicate_and_mark(h):
                     continue
                 label = sentiment_analyzer(content[:512])[0]['label']
-                score = 0.5 if label=='positive' else -0.5 if label=='negative' else 0
+                score = 0.5 if label == 'positive' else -0.5 if label == 'negative' else 0
                 if abs(score) < config.sentiment_threshold:
                     continue
                 for ticker in match_ticker(content):
@@ -252,7 +253,7 @@ def main():
     scheduler = BackgroundScheduler()
     scheduler.add_job(fetch_and_analyze_news, 'interval', minutes=config.scan_interval_minutes)
     scheduler.start()
-    app.run(host='0.0.0.0', port=config.port)
+    serve(app, host='0.0.0.0', port=config.port)
 
 if __name__ == '__main__':
     main()
