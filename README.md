@@ -1,36 +1,82 @@
-# HourlyAlertSystem
-# 📈 Real-Time Options Trade Alert Bot
+# RealTimeTradeBot 📈
 
-A production-ready Python Telegram bot that scans real-time market news and earnings data to deliver **actionable options trade alerts** with high probability setups. Designed for retail traders navigating PDT constraints and limited capital accounts.
-
----
-
-## 🔍 Features
-
-- ✅ Real-time news sentiment analysis (via Yahoo Finance RSS + TextBlob)
-- ✅ Earnings calendar scanning via Finnhub API
-- ✅ Smart filtering of liquid tickers (AAPL, TSLA, SPY, MSFT, etc.)
-- ✅ Structured trade alerts:
-  - Option strategy (long call/put)
-  - Strike & expiration recommendation
-  - Trade rationale with sentiment context
-- ✅ Telegram integration for direct mobile alerts
-- ✅ Built for $200 accounts with PDT restrictions
-- ✅ Auto-hosted using Flask & Replit with UptimeRobot
+A real-time trading alert bot built with Python. It scrapes Yahoo Finance news, analyzes sentiment, detects high-probability opportunities, and sends alerts via Telegram.
 
 ---
 
 ## 🚀 Live Demo
 
-This bot runs continuously and sends live trade alerts to subscribed Telegram users.
-
-> 🧪 Try it: [Live Replit Deployment](https://replit.com/@thinkshiftllc23/HourlyAlertSystem)
+Deployed and running at:
+➡️ [https://realtimetradebot.onrender.com](https://realtimetradebot.onrender.com)
 
 ---
 
-## 🔧 Setup Instructions
+## 💡 Features
 
-### 1. Clone or Fork This Repo
+- ✅ Real-time RSS news scanning (Yahoo Finance)
+- ✅ Sentiment analysis using TextBlob
+- ✅ Matches tickers against a list of highly liquid US stocks
+- ✅ Sends actionable alerts to Telegram
+- ✅ Includes trade direction, strike, expiration, and POP
+- ✅ Logs and tracks alerts to avoid duplicates
+- ✅ Hosted on Render with Flask + Waitress
+
+---
+
+## 🛠️ Tech Stack
+
+- Python 3.11
+- Flask + Waitress (deployment)
+- Feedparser (news scraping)
+- TextBlob (sentiment analysis)
+- Telegram Bot API (alerting)
+- Hosted on Render.com
+
+---
+
+## 🧪 Setup & Run Locally
 
 ```bash
-git clone https://github.com/ThinkShiftGIT/HourlyAlertSystem.git
+git clone https://github.com/ThinkShiftGIT/RealTimeTradeBot.git
+cd RealTimeTradeBot
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Add secrets via .env or Render dashboard
+# TELEGRAM_BOT_TOKEN=your_bot_token
+# FINNHUB_API_KEY=your_finnhub_key (future integration)
+
+# Run the bot
+python main.py
+```
+
+---
+
+## 📦 Deploy on Render
+
+1. Fork or clone this repo
+2. Go to [https://dashboard.render.com](https://dashboard.render.com)
+3. Create a new **Web Service**
+4. Connect to your GitHub and pick this repo
+5. Set Build Command: `pip install -r requirements.txt`
+6. Set Start Command: `python3 -m waitress --port=$PORT main:app`
+7. Add your **Secrets** under Environment tab
+
+---
+
+## 🧠 Roadmap
+
+- ✅ Real-time news scanning & alerting
+- 🔜 Tradier options chain integration
+- 🔜 Twitter finance sentiment feed
+- 🔜 Earnings calendar integration
+- 🔜 SQLite alert log for backtest & history
+
+---
+
+## 👤 Author
+
+[ThinkShiftGIT](https://github.com/ThinkShiftGIT)
+
+Built with 💻 and 📊 in 2025
