@@ -1,8 +1,7 @@
-Flask
+Flask>=2.0
 waitress
 APScheduler
 requests
 feedparser
-beautifulsoup4
 vaderSentiment
 tenacity
