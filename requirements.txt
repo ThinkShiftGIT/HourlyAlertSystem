@@ -6,8 +6,12 @@ feedparser
 python-dateutil
 beautifulsoup4
 requests
-transformers
-torch
 prometheus-client
 sentry-sdk
 python-json-logger
+
+# CPU-only PyTorch
+torch==2.0.1+cpu -f https://download.pytorch.org/whl/torch_stable.html
+
+# A reasonably recent Transformers
+transformers==4.21.0
