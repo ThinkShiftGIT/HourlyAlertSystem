@@ -1,0 +1,311 @@
+2025-05-06 02:36:42,139 - INFO - Checking news...
+2025-05-06 02:36:42,155 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:8080
+ * Running on http://172.31.128.77:8080
+2025-05-06 02:36:42,155 - INFO - [33mPress CTRL+C to quit[0m
+2025-05-06 02:36:42,268 - INFO - No ticker match: Is JPMorgan Chase & Co. (JPM) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 02:36:42,270 - INFO - No ticker match: Is Bank of America Corporation (BAC) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 02:36:42,270 - INFO - No ticker match: Is Alibaba Group Holding Limited (BABA) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 02:36:42,271 - INFO - No ticker match: China may make a ‘retaliatory’ move that could ‘hit' US homeowners 'hard.' Here's what Beijing's saying
+2025-05-06 02:36:42,271 - INFO - No ticker match: The Smartest Growth ETF to Buy With $2,000 Right Now
+2025-05-06 02:36:42,271 - INFO - No ticker match: Is Johnson & Johnson (JNJ) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 02:36:42,272 - INFO - No ticker match: Is Citigroup Inc. (C) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 02:36:42,272 - INFO - No ticker match: Astera Labs, Inc. (ALAB): Among the Large-Cap Stocks Insiders and Short Sellers Are Dumping Like Crazy
+2025-05-06 02:36:42,272 - INFO - No ticker match: Is Wells Fargo & Company (WFC) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 02:36:42,273 - INFO - No ticker match: Is Pfizer Inc. (PFE) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 02:36:42,273 - INFO - No ticker match: Is Exxon Mobil Corporation (XOM) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 02:36:42,274 - INFO - No ticker match: Insmed Incorporated (INSM): Among the Large-Cap Stocks Insiders and Short Sellers Are Dumping Like Crazy
+2025-05-06 02:36:42,274 - INFO - No ticker match: Is "Magnificent Seven" Laggard Microsoft Ready to Rally?
+2025-05-06 02:36:42,274 - INFO - No ticker match: Rubrik, Inc. (RBRK): Among the Large-Cap Stocks Insiders and Short Sellers Are Dumping Like Crazy
+2025-05-06 02:36:42,275 - INFO - No ticker match: These Are The 5 Best Stocks To Buy Now Or Watch
+2025-05-06 02:36:42,275 - INFO - No ticker match: Trump claims tariffs could 'eliminate' taxes for most of Americans, but experts argue the math doesn't add up
+2025-05-06 02:36:42,275 - INFO - No ticker match: Smart retirement moves to make in your 40s and 50s
+2025-05-06 02:36:42,276 - INFO - No ticker match: Is CVS Health Corporation (CVS) The Best Stock To Buy and Hold For 10 Years?
+2025-05-06 02:36:42,277 - INFO - No ticker match: Is Robinhood Markets, Inc. (HOOD) The Best Stock To Buy and Hold For 10 Years?
+2025-05-06 02:36:42,277 - INFO - No ticker match: 5 Best Grocery Stocks To Buy for Steady Returns
+2025-05-06 02:36:42,278 - INFO - No ticker match: Is DraftKings Inc. (DKNG) The Best Stock To Buy and Hold For 10 Years?
+2025-05-06 02:36:42,279 - INFO - No ticker match: Bitcoin's Bullish Structure Remains Intact: Continuation Could Lead To Higher Prices Ahead
+2025-05-06 02:36:42,777 - INFO - Alert sent to 1654552128
+2025-05-06 02:43:32,524 - INFO - Checking news...
+2025-05-06 02:43:32,541 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:8080
+ * Running on http://172.31.128.77:8080
+2025-05-06 02:43:32,541 - INFO - [33mPress CTRL+C to quit[0m
+2025-05-06 02:43:32,639 - INFO - No ticker match: These Are The 5 Best Stocks To Buy Now Or Watch
+2025-05-06 02:43:32,640 - INFO - No ticker match: Is Bank of America Corporation (BAC) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 02:43:32,640 - INFO - No ticker match: Is Johnson & Johnson (JNJ) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 02:43:32,640 - INFO - No ticker match: Astera Labs, Inc. (ALAB): Among the Large-Cap Stocks Insiders and Short Sellers Are Dumping Like Crazy
+2025-05-06 02:43:32,641 - INFO - No ticker match: Is JPMorgan Chase & Co. (JPM) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 02:43:32,641 - INFO - No ticker match: Is Exxon Mobil Corporation (XOM) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 02:43:32,642 - INFO - No ticker match: Is Alibaba Group Holding Limited (BABA) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 02:43:32,642 - INFO - No ticker match: China may make a ‘retaliatory’ move that could ‘hit' US homeowners 'hard.' Here's what Beijing's saying
+2025-05-06 02:43:32,643 - INFO - No ticker match: Is Wells Fargo & Company (WFC) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 02:43:32,643 - INFO - No ticker match: Is Pfizer Inc. (PFE) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 02:43:32,643 - INFO - No ticker match: Is Citigroup Inc. (C) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 02:43:32,644 - INFO - No ticker match: The Smartest Growth ETF to Buy With $2,000 Right Now
+2025-05-06 02:43:32,644 - INFO - No ticker match: Bitcoin's Bullish Structure Remains Intact: Continuation Could Lead To Higher Prices Ahead
+2025-05-06 02:43:32,644 - INFO - No ticker match: Is "Magnificent Seven" Laggard Microsoft Ready to Rally?
+2025-05-06 02:43:32,645 - INFO - No ticker match: Rubrik, Inc. (RBRK): Among the Large-Cap Stocks Insiders and Short Sellers Are Dumping Like Crazy
+2025-05-06 02:43:32,645 - INFO - No ticker match: Is DraftKings Inc. (DKNG) The Best Stock To Buy and Hold For 10 Years?
+2025-05-06 02:43:32,646 - INFO - No ticker match: Smart retirement moves to make in your 40s and 50s
+2025-05-06 02:43:32,646 - INFO - No ticker match: Is CVS Health Corporation (CVS) The Best Stock To Buy and Hold For 10 Years?
+2025-05-06 02:43:32,647 - INFO - No ticker match: Is Robinhood Markets, Inc. (HOOD) The Best Stock To Buy and Hold For 10 Years?
+2025-05-06 02:43:32,647 - INFO - No ticker match: 5 Best Grocery Stocks To Buy for Steady Returns
+2025-05-06 02:43:32,648 - INFO - No ticker match: Trump claims tariffs could 'eliminate' taxes for most of Americans, but experts argue the math doesn't add up
+2025-05-06 02:43:32,649 - INFO - No ticker match: Insmed Incorporated (INSM): Among the Large-Cap Stocks Insiders and Short Sellers Are Dumping Like Crazy
+2025-05-06 02:43:33,140 - INFO - Alert sent to 1654552128
+2025-05-06 02:43:33,142 - INFO - No ticker match: ‘I try to think ahead’: My boyfriend earns more than me, but I refuse to marry him without a prenup. Is that wise?
+2025-05-06 02:43:33,624 - INFO - Alert sent to 1654552128
+2025-05-06 02:43:33,625 - INFO - No ticker match: Taiwan Semiconductor (TSM): Among Billionaire Chase Coleman’s Stocks with Huge Upside Potential
+2025-05-06 02:47:27,257 - INFO - 🔍 Checking news...
+2025-05-06 02:47:27,277 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:8080
+ * Running on http://172.31.128.77:8080
+2025-05-06 02:47:27,278 - INFO - [33mPress CTRL+C to quit[0m
+2025-05-06 02:47:27,369 - INFO - No ticker match for: These Are The 5 Best Stocks To Buy Now Or Watch
+2025-05-06 02:47:27,854 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 02:47:27,855 - INFO - No ticker match for: Is Johnson & Johnson (JNJ) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 02:47:27,856 - INFO - No ticker match for: Astera Labs, Inc. (ALAB): Among the Large-Cap Stocks Insiders and Short Sellers Are Dumping Like Crazy
+2025-05-06 02:47:28,343 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 02:47:28,344 - INFO - No ticker match for: Is Exxon Mobil Corporation (XOM) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 02:47:28,837 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 02:47:29,319 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 02:47:29,320 - INFO - No ticker match for: Is Wells Fargo & Company (WFC) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 02:47:29,320 - INFO - No ticker match for: Is Pfizer Inc. (PFE) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 02:47:29,321 - INFO - No ticker match for: Is Citigroup Inc. (C) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 02:47:29,321 - INFO - No ticker match for: The Smartest Growth ETF to Buy With $2,000 Right Now
+2025-05-06 02:47:29,322 - INFO - No ticker match for: Bitcoin's Bullish Structure Remains Intact: Continuation Could Lead To Higher Prices Ahead
+2025-05-06 02:47:29,805 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 02:47:29,806 - INFO - No ticker match for: Rubrik, Inc. (RBRK): Among the Large-Cap Stocks Insiders and Short Sellers Are Dumping Like Crazy
+2025-05-06 02:47:29,807 - INFO - No ticker match for: Is DraftKings Inc. (DKNG) The Best Stock To Buy and Hold For 10 Years?
+2025-05-06 02:47:30,297 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 02:47:30,779 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 02:47:30,780 - INFO - No ticker match for: Is Robinhood Markets, Inc. (HOOD) The Best Stock To Buy and Hold For 10 Years?
+2025-05-06 02:47:30,780 - INFO - No ticker match for: 5 Best Grocery Stocks To Buy for Steady Returns
+2025-05-06 02:47:30,781 - INFO - No ticker match for: Trump claims tariffs could 'eliminate' taxes for most of Americans, but experts argue the math doesn't add up
+2025-05-06 02:47:30,782 - INFO - No ticker match for: Insmed Incorporated (INSM): Among the Large-Cap Stocks Insiders and Short Sellers Are Dumping Like Crazy
+2025-05-06 02:47:31,261 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 02:47:31,263 - INFO - No ticker match for: ‘I try to think ahead’: My boyfriend earns more than me, but I refuse to marry him without a prenup. Is that wise?
+2025-05-06 02:47:31,746 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 02:47:31,747 - INFO - No ticker match for: Taiwan Semiconductor (TSM): Among Billionaire Chase Coleman’s Stocks with Huge Upside Potential
+2025-05-06 02:52:31,843 - INFO - 🔍 Checking news...
+2025-05-06 02:52:32,413 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 02:52:32,903 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 02:52:32,904 - INFO - No ticker match for: Is Citigroup Inc. (C) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 02:52:32,905 - INFO - No ticker match for: Is Pfizer Inc. (PFE) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 02:52:32,905 - INFO - No ticker match for: Is Johnson & Johnson (JNJ) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 02:52:32,906 - INFO - No ticker match for: Is Wells Fargo & Company (WFC) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 02:52:32,906 - INFO - No ticker match for: Is Exxon Mobil Corporation (XOM) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 02:52:32,907 - INFO - No ticker match for: Insmed Incorporated (INSM): Among the Large-Cap Stocks Insiders and Short Sellers Are Dumping Like Crazy
+2025-05-06 02:52:33,396 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 02:52:33,397 - INFO - No ticker match for: These Are The 5 Best Stocks To Buy Now Or Watch
+2025-05-06 02:52:33,397 - INFO - No ticker match for: Astera Labs, Inc. (ALAB): Among the Large-Cap Stocks Insiders and Short Sellers Are Dumping Like Crazy
+2025-05-06 02:52:33,398 - INFO - No ticker match for: The Smartest Growth ETF to Buy With $2,000 Right Now
+2025-05-06 02:52:33,398 - INFO - No ticker match for: Rubrik, Inc. (RBRK): Among the Large-Cap Stocks Insiders and Short Sellers Are Dumping Like Crazy
+2025-05-06 02:52:33,399 - INFO - No ticker match for: Is DraftKings Inc. (DKNG) The Best Stock To Buy and Hold For 10 Years?
+2025-05-06 02:52:33,883 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 02:52:34,364 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 02:52:34,843 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 02:52:34,843 - INFO - No ticker match for: Is Robinhood Markets, Inc. (HOOD) The Best Stock To Buy and Hold For 10 Years?
+2025-05-06 02:52:34,844 - INFO - No ticker match for: Trump claims tariffs could 'eliminate' taxes for most of Americans, but experts argue the math doesn't add up
+2025-05-06 02:52:34,845 - INFO - No ticker match for: 5 Best Grocery Stocks To Buy for Steady Returns
+2025-05-06 02:52:35,335 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 02:52:35,337 - INFO - No ticker match for: Bitcoin's Bullish Structure Remains Intact: Continuation Could Lead To Higher Prices Ahead
+2025-05-06 02:52:35,825 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 02:52:35,826 - INFO - No ticker match for: Taiwan Semiconductor (TSM): Among Billionaire Chase Coleman’s Stocks with Huge Upside Potential
+2025-05-06 02:52:35,826 - INFO - No ticker match for: ‘I try to think ahead’: My boyfriend earns more than me, but I refuse to marry him without a prenup. Is that wise?
+2025-05-06 02:52:35,827 - INFO - No ticker match for: Flutter Entertainment (FLUT): Among Billionaire Chase Coleman’s Stocks with Huge Upside Potential
+2025-05-06 02:52:35,827 - INFO - No ticker match for: QUALCOMM Incorporated (QCOM): Among Billionaire Chase Coleman’s Stocks with Huge Upside Potential
+2025-05-06 02:57:35,940 - INFO - 🔍 Checking news...
+2025-05-06 02:57:36,516 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 02:57:36,998 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 02:57:36,999 - INFO - No ticker match for: Is Citigroup Inc. (C) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 02:57:36,999 - INFO - No ticker match for: Is Pfizer Inc. (PFE) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 02:57:37,000 - INFO - No ticker match for: Is Johnson & Johnson (JNJ) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 02:57:37,001 - INFO - No ticker match for: Is Wells Fargo & Company (WFC) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 02:57:37,002 - INFO - No ticker match for: Is Exxon Mobil Corporation (XOM) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 02:57:37,003 - INFO - No ticker match for: Insmed Incorporated (INSM): Among the Large-Cap Stocks Insiders and Short Sellers Are Dumping Like Crazy
+2025-05-06 02:57:37,481 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 02:57:37,482 - INFO - No ticker match for: These Are The 5 Best Stocks To Buy Now Or Watch
+2025-05-06 02:57:37,482 - INFO - No ticker match for: Astera Labs, Inc. (ALAB): Among the Large-Cap Stocks Insiders and Short Sellers Are Dumping Like Crazy
+2025-05-06 02:57:37,482 - INFO - No ticker match for: The Smartest Growth ETF to Buy With $2,000 Right Now
+2025-05-06 02:57:37,482 - INFO - No ticker match for: Rubrik, Inc. (RBRK): Among the Large-Cap Stocks Insiders and Short Sellers Are Dumping Like Crazy
+2025-05-06 02:57:37,483 - INFO - No ticker match for: Is DraftKings Inc. (DKNG) The Best Stock To Buy and Hold For 10 Years?
+2025-05-06 02:57:37,962 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 02:57:38,448 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 02:57:38,933 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 02:57:38,934 - INFO - No ticker match for: Is Robinhood Markets, Inc. (HOOD) The Best Stock To Buy and Hold For 10 Years?
+2025-05-06 02:57:38,935 - INFO - No ticker match for: Trump claims tariffs could 'eliminate' taxes for most of Americans, but experts argue the math doesn't add up
+2025-05-06 02:57:38,936 - INFO - No ticker match for: 5 Best Grocery Stocks To Buy for Steady Returns
+2025-05-06 02:57:39,419 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 02:57:39,420 - INFO - No ticker match for: Bitcoin's Bullish Structure Remains Intact: Continuation Could Lead To Higher Prices Ahead
+2025-05-06 02:57:39,902 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 02:57:39,903 - INFO - No ticker match for: Taiwan Semiconductor (TSM): Among Billionaire Chase Coleman’s Stocks with Huge Upside Potential
+2025-05-06 02:57:39,904 - INFO - No ticker match for: ‘I try to think ahead’: My boyfriend earns more than me, but I refuse to marry him without a prenup. Is that wise?
+2025-05-06 02:57:39,904 - INFO - No ticker match for: Flutter Entertainment (FLUT): Among Billionaire Chase Coleman’s Stocks with Huge Upside Potential
+2025-05-06 02:57:39,905 - INFO - No ticker match for: QUALCOMM Incorporated (QCOM): Among Billionaire Chase Coleman’s Stocks with Huge Upside Potential
+2025-05-06 03:02:40,044 - INFO - 🔍 Checking news...
+2025-05-06 03:02:40,135 - INFO - No ticker match for: These Are The 5 Best Stocks To Buy Now Or Watch
+2025-05-06 03:02:40,135 - INFO - No ticker match for: Is Pfizer Inc. (PFE) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 03:02:40,632 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 03:02:40,632 - INFO - No ticker match for: Is Wells Fargo & Company (WFC) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 03:02:40,633 - INFO - No ticker match for: Insmed Incorporated (INSM): Among the Large-Cap Stocks Insiders and Short Sellers Are Dumping Like Crazy
+2025-05-06 03:02:40,633 - INFO - No ticker match for: Rubrik, Inc. (RBRK): Among the Large-Cap Stocks Insiders and Short Sellers Are Dumping Like Crazy
+2025-05-06 03:02:40,633 - INFO - No ticker match for: Is Johnson & Johnson (JNJ) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 03:02:40,634 - INFO - No ticker match for: Is Exxon Mobil Corporation (XOM) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 03:02:40,634 - INFO - No ticker match for: Is Citigroup Inc. (C) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 03:02:41,132 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 03:02:41,616 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 03:02:42,097 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 03:02:42,098 - INFO - No ticker match for: Astera Labs, Inc. (ALAB): Among the Large-Cap Stocks Insiders and Short Sellers Are Dumping Like Crazy
+2025-05-06 03:02:42,099 - INFO - No ticker match for: Is DraftKings Inc. (DKNG) The Best Stock To Buy and Hold For 10 Years?
+2025-05-06 03:02:42,586 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 03:02:43,065 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 03:02:43,066 - INFO - No ticker match for: Is Robinhood Markets, Inc. (HOOD) The Best Stock To Buy and Hold For 10 Years?
+2025-05-06 03:02:43,067 - INFO - No ticker match for: The Smartest Growth ETF to Buy With $2,000 Right Now
+2025-05-06 03:02:43,068 - INFO - No ticker match for: Trump claims tariffs could 'eliminate' taxes for most of Americans, but experts argue the math doesn't add up
+2025-05-06 03:02:43,553 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 03:02:43,554 - INFO - No ticker match for: 5 Best Grocery Stocks To Buy for Steady Returns
+2025-05-06 03:02:43,556 - INFO - No ticker match for: Bitcoin's Bullish Structure Remains Intact: Continuation Could Lead To Higher Prices Ahead
+2025-05-06 03:02:44,036 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 03:02:44,037 - INFO - No ticker match for: Taiwan Semiconductor (TSM): Among Billionaire Chase Coleman’s Stocks with Huge Upside Potential
+2025-05-06 03:02:44,037 - INFO - No ticker match for: Flutter Entertainment (FLUT): Among Billionaire Chase Coleman’s Stocks with Huge Upside Potential
+2025-05-06 03:02:44,038 - INFO - No ticker match for: QUALCOMM Incorporated (QCOM): Among Billionaire Chase Coleman’s Stocks with Huge Upside Potential
+2025-05-06 03:02:44,038 - INFO - No ticker match for: ‘I try to think ahead’: My boyfriend earns more than me, but I refuse to marry him without a prenup. Is that wise?
+2025-05-06 03:07:44,167 - INFO - 🔍 Checking news...
+2025-05-06 03:07:44,296 - INFO - No ticker match for: These Are The 5 Best Stocks To Buy Now Or Watch
+2025-05-06 03:07:44,296 - INFO - No ticker match for: Is Pfizer Inc. (PFE) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 03:07:44,778 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 03:07:44,779 - INFO - No ticker match for: Is Wells Fargo & Company (WFC) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 03:07:44,779 - INFO - No ticker match for: Insmed Incorporated (INSM): Among the Large-Cap Stocks Insiders and Short Sellers Are Dumping Like Crazy
+2025-05-06 03:07:44,780 - INFO - No ticker match for: Rubrik, Inc. (RBRK): Among the Large-Cap Stocks Insiders and Short Sellers Are Dumping Like Crazy
+2025-05-06 03:07:44,780 - INFO - No ticker match for: Is Johnson & Johnson (JNJ) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 03:07:44,780 - INFO - No ticker match for: Is Exxon Mobil Corporation (XOM) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 03:07:44,781 - INFO - No ticker match for: Is Citigroup Inc. (C) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 03:07:45,270 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 03:07:45,755 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 03:07:46,242 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 03:07:46,243 - INFO - No ticker match for: Astera Labs, Inc. (ALAB): Among the Large-Cap Stocks Insiders and Short Sellers Are Dumping Like Crazy
+2025-05-06 03:07:46,243 - INFO - No ticker match for: Is DraftKings Inc. (DKNG) The Best Stock To Buy and Hold For 10 Years?
+2025-05-06 03:07:46,724 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 03:07:47,221 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 03:07:47,222 - INFO - No ticker match for: Is Robinhood Markets, Inc. (HOOD) The Best Stock To Buy and Hold For 10 Years?
+2025-05-06 03:07:47,222 - INFO - No ticker match for: The Smartest Growth ETF to Buy With $2,000 Right Now
+2025-05-06 03:07:47,223 - INFO - No ticker match for: Trump claims tariffs could 'eliminate' taxes for most of Americans, but experts argue the math doesn't add up
+2025-05-06 03:07:47,707 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 03:07:47,708 - INFO - No ticker match for: 5 Best Grocery Stocks To Buy for Steady Returns
+2025-05-06 03:07:47,710 - INFO - No ticker match for: Bitcoin's Bullish Structure Remains Intact: Continuation Could Lead To Higher Prices Ahead
+2025-05-06 03:07:48,213 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 03:07:48,214 - INFO - No ticker match for: Taiwan Semiconductor (TSM): Among Billionaire Chase Coleman’s Stocks with Huge Upside Potential
+2025-05-06 03:07:48,215 - INFO - No ticker match for: Flutter Entertainment (FLUT): Among Billionaire Chase Coleman’s Stocks with Huge Upside Potential
+2025-05-06 03:07:48,215 - INFO - No ticker match for: QUALCOMM Incorporated (QCOM): Among Billionaire Chase Coleman’s Stocks with Huge Upside Potential
+2025-05-06 03:07:48,216 - INFO - No ticker match for: ‘I try to think ahead’: My boyfriend earns more than me, but I refuse to marry him without a prenup. Is that wise?
+2025-05-06 03:12:48,362 - INFO - 🔍 Checking news...
+2025-05-06 03:12:48,952 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 03:12:48,953 - INFO - No ticker match for: Rubrik, Inc. (RBRK): Among the Large-Cap Stocks Insiders and Short Sellers Are Dumping Like Crazy
+2025-05-06 03:12:49,432 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 03:12:49,434 - INFO - No ticker match for: Insmed Incorporated (INSM): Among the Large-Cap Stocks Insiders and Short Sellers Are Dumping Like Crazy
+2025-05-06 03:12:49,434 - INFO - No ticker match for: Is DraftKings Inc. (DKNG) The Best Stock To Buy and Hold For 10 Years?
+2025-05-06 03:12:49,914 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 03:12:49,915 - INFO - No ticker match for: Is Pfizer Inc. (PFE) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 03:12:49,916 - INFO - No ticker match for: Is Wells Fargo & Company (WFC) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 03:12:49,916 - INFO - No ticker match for: Is Citigroup Inc. (C) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 03:12:49,916 - INFO - No ticker match for: 5 Best Grocery Stocks To Buy for Steady Returns
+2025-05-06 03:12:49,917 - INFO - No ticker match for: Is Johnson & Johnson (JNJ) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 03:12:49,917 - INFO - No ticker match for: Is Exxon Mobil Corporation (XOM) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 03:12:50,396 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 03:12:50,397 - INFO - No ticker match for: These Are The 5 Best Stocks To Buy Now Or Watch
+2025-05-06 03:12:50,398 - INFO - No ticker match for: Bitcoin's Bullish Structure Remains Intact: Continuation Could Lead To Higher Prices Ahead
+2025-05-06 03:12:50,398 - INFO - No ticker match for: Is Robinhood Markets, Inc. (HOOD) The Best Stock To Buy and Hold For 10 Years?
+2025-05-06 03:12:50,399 - INFO - No ticker match for: Trump claims tariffs could 'eliminate' taxes for most of Americans, but experts argue the math doesn't add up
+2025-05-06 03:12:50,882 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 03:12:50,883 - INFO - No ticker match for: ‘I try to think ahead’: My boyfriend earns more than me, but I refuse to marry him without a prenup. Is that wise?
+2025-05-06 03:12:51,371 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 03:12:51,372 - INFO - No ticker match for: Taiwan Semiconductor (TSM): Among Billionaire Chase Coleman’s Stocks with Huge Upside Potential
+2025-05-06 03:12:51,372 - INFO - No ticker match for: Flutter Entertainment (FLUT): Among Billionaire Chase Coleman’s Stocks with Huge Upside Potential
+2025-05-06 03:12:51,373 - INFO - No ticker match for: QUALCOMM Incorporated (QCOM): Among Billionaire Chase Coleman’s Stocks with Huge Upside Potential
+2025-05-06 03:12:51,374 - INFO - No ticker match for: Applied Materials, Inc. (AMAT): Among Billionaire Chase Coleman’s Stocks with Huge Upside Potential
+2025-05-06 03:12:51,374 - INFO - No ticker match for: UnitedHealth Group (UNH): Among Billionaire Chase Coleman’s Stocks with Huge Upside Potential
+2025-05-06 03:12:51,374 - INFO - No ticker match for: Datadog, Inc. (DDOG): Among Billionaire Chase Coleman’s Stocks with Huge Upside Potential
+2025-05-06 03:17:51,497 - INFO - 🔍 Checking news...
+2025-05-06 03:17:52,066 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 03:17:52,067 - INFO - No ticker match for: Rubrik, Inc. (RBRK): Among the Large-Cap Stocks Insiders and Short Sellers Are Dumping Like Crazy
+2025-05-06 03:17:52,546 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 03:17:52,547 - INFO - No ticker match for: Insmed Incorporated (INSM): Among the Large-Cap Stocks Insiders and Short Sellers Are Dumping Like Crazy
+2025-05-06 03:17:52,547 - INFO - No ticker match for: Is DraftKings Inc. (DKNG) The Best Stock To Buy and Hold For 10 Years?
+2025-05-06 03:17:53,027 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 03:17:53,028 - INFO - No ticker match for: Is Pfizer Inc. (PFE) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 03:17:53,028 - INFO - No ticker match for: Is Wells Fargo & Company (WFC) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 03:17:53,029 - INFO - No ticker match for: Is Citigroup Inc. (C) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 03:17:53,029 - INFO - No ticker match for: 5 Best Grocery Stocks To Buy for Steady Returns
+2025-05-06 03:17:53,029 - INFO - No ticker match for: Is Johnson & Johnson (JNJ) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 03:17:53,029 - INFO - No ticker match for: Is Exxon Mobil Corporation (XOM) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 03:17:53,510 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 03:17:53,510 - INFO - No ticker match for: These Are The 5 Best Stocks To Buy Now Or Watch
+2025-05-06 03:17:53,511 - INFO - No ticker match for: Bitcoin's Bullish Structure Remains Intact: Continuation Could Lead To Higher Prices Ahead
+2025-05-06 03:17:53,511 - INFO - No ticker match for: Is Robinhood Markets, Inc. (HOOD) The Best Stock To Buy and Hold For 10 Years?
+2025-05-06 03:17:53,512 - INFO - No ticker match for: Trump claims tariffs could 'eliminate' taxes for most of Americans, but experts argue the math doesn't add up
+2025-05-06 03:17:53,991 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 03:17:53,992 - INFO - No ticker match for: ‘I try to think ahead’: My boyfriend earns more than me, but I refuse to marry him without a prenup. Is that wise?
+2025-05-06 03:17:54,475 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 03:17:54,476 - INFO - No ticker match for: Taiwan Semiconductor (TSM): Among Billionaire Chase Coleman’s Stocks with Huge Upside Potential
+2025-05-06 03:17:54,477 - INFO - No ticker match for: Flutter Entertainment (FLUT): Among Billionaire Chase Coleman’s Stocks with Huge Upside Potential
+2025-05-06 03:17:54,478 - INFO - No ticker match for: QUALCOMM Incorporated (QCOM): Among Billionaire Chase Coleman’s Stocks with Huge Upside Potential
+2025-05-06 03:17:54,478 - INFO - No ticker match for: Applied Materials, Inc. (AMAT): Among Billionaire Chase Coleman’s Stocks with Huge Upside Potential
+2025-05-06 03:17:54,479 - INFO - No ticker match for: UnitedHealth Group (UNH): Among Billionaire Chase Coleman’s Stocks with Huge Upside Potential
+2025-05-06 03:17:54,479 - INFO - No ticker match for: Datadog, Inc. (DDOG): Among Billionaire Chase Coleman’s Stocks with Huge Upside Potential
+2025-05-06 03:22:54,609 - INFO - 🔍 Checking news...
+2025-05-06 03:22:54,739 - INFO - No ticker match for: These Are The 5 Best Stocks To Buy Now Or Watch
+2025-05-06 03:22:54,740 - INFO - No ticker match for: 5 Best Grocery Stocks To Buy for Steady Returns
+2025-05-06 03:22:55,228 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 03:22:55,727 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 03:22:55,728 - INFO - No ticker match for: Is DraftKings Inc. (DKNG) The Best Stock To Buy and Hold For 10 Years?
+2025-05-06 03:22:55,728 - INFO - No ticker match for: Bitcoin's Bullish Structure Remains Intact: Continuation Could Lead To Higher Prices Ahead
+2025-05-06 03:22:55,729 - INFO - No ticker match for: Is Robinhood Markets, Inc. (HOOD) The Best Stock To Buy and Hold For 10 Years?
+2025-05-06 03:22:55,729 - INFO - No ticker match for: Rubrik, Inc. (RBRK): Among the Large-Cap Stocks Insiders and Short Sellers Are Dumping Like Crazy
+2025-05-06 03:22:55,729 - INFO - No ticker match for: Insmed Incorporated (INSM): Among the Large-Cap Stocks Insiders and Short Sellers Are Dumping Like Crazy
+2025-05-06 03:22:55,730 - INFO - No ticker match for: Is Pfizer Inc. (PFE) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 03:22:55,730 - INFO - No ticker match for: Is Wells Fargo & Company (WFC) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 03:22:55,731 - INFO - No ticker match for: Is Citigroup Inc. (C) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 03:22:55,731 - INFO - No ticker match for: Is Johnson & Johnson (JNJ) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 03:22:56,207 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 03:22:56,208 - INFO - No ticker match for: Is Exxon Mobil Corporation (XOM) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 03:22:56,690 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 03:22:56,691 - INFO - No ticker match for: ‘I try to think ahead’: My boyfriend earns more than me, but I refuse to marry him without a prenup. Is that wise?
+2025-05-06 03:22:56,692 - INFO - No ticker match for: Trump claims tariffs could 'eliminate' taxes for most of Americans, but experts argue the math doesn't add up
+2025-05-06 03:22:57,175 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 03:22:57,657 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 03:22:57,658 - INFO - No ticker match for: Taiwan Semiconductor (TSM): Among Billionaire Chase Coleman’s Stocks with Huge Upside Potential
+2025-05-06 03:22:57,659 - INFO - No ticker match for: Flutter Entertainment (FLUT): Among Billionaire Chase Coleman’s Stocks with Huge Upside Potential
+2025-05-06 03:22:57,659 - INFO - No ticker match for: QUALCOMM Incorporated (QCOM): Among Billionaire Chase Coleman’s Stocks with Huge Upside Potential
+2025-05-06 03:22:57,660 - INFO - No ticker match for: Applied Materials, Inc. (AMAT): Among Billionaire Chase Coleman’s Stocks with Huge Upside Potential
+2025-05-06 03:22:57,660 - INFO - No ticker match for: UnitedHealth Group (UNH): Among Billionaire Chase Coleman’s Stocks with Huge Upside Potential
+2025-05-06 03:27:57,768 - INFO - 🔍 Checking news...
+2025-05-06 03:27:57,855 - INFO - No ticker match for: These Are The 5 Best Stocks To Buy Now Or Watch
+2025-05-06 03:27:57,855 - INFO - No ticker match for: 5 Best Grocery Stocks To Buy for Steady Returns
+2025-05-06 03:27:58,339 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 03:27:58,830 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 03:27:58,831 - INFO - No ticker match for: Is DraftKings Inc. (DKNG) The Best Stock To Buy and Hold For 10 Years?
+2025-05-06 03:27:58,832 - INFO - No ticker match for: Bitcoin's Bullish Structure Remains Intact: Continuation Could Lead To Higher Prices Ahead
+2025-05-06 03:27:58,832 - INFO - No ticker match for: Is Robinhood Markets, Inc. (HOOD) The Best Stock To Buy and Hold For 10 Years?
+2025-05-06 03:27:58,832 - INFO - No ticker match for: Rubrik, Inc. (RBRK): Among the Large-Cap Stocks Insiders and Short Sellers Are Dumping Like Crazy
+2025-05-06 03:27:58,833 - INFO - No ticker match for: Insmed Incorporated (INSM): Among the Large-Cap Stocks Insiders and Short Sellers Are Dumping Like Crazy
+2025-05-06 03:27:58,833 - INFO - No ticker match for: Is Pfizer Inc. (PFE) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 03:27:58,834 - INFO - No ticker match for: Is Wells Fargo & Company (WFC) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 03:27:58,834 - INFO - No ticker match for: Is Citigroup Inc. (C) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 03:27:58,834 - INFO - No ticker match for: Is Johnson & Johnson (JNJ) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 03:27:59,314 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 03:27:59,315 - INFO - No ticker match for: Is Exxon Mobil Corporation (XOM) The Most Profitable Cheap Stock to Buy Now?
+2025-05-06 03:27:59,804 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 03:27:59,805 - INFO - No ticker match for: ‘I try to think ahead’: My boyfriend earns more than me, but I refuse to marry him without a prenup. Is that wise?
+2025-05-06 03:27:59,806 - INFO - No ticker match for: Trump claims tariffs could 'eliminate' taxes for most of Americans, but experts argue the math doesn't add up
+2025-05-06 03:28:00,291 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 03:28:00,846 - INFO - ✅ Alert sent to 1654552128
+2025-05-06 03:28:00,846 - INFO - No ticker match for: Taiwan Semiconductor (TSM): Among Billionaire Chase Coleman’s Stocks with Huge Upside Potential
+2025-05-06 03:28:00,847 - INFO - No ticker match for: Flutter Entertainment (FLUT): Among Billionaire Chase Coleman’s Stocks with Huge Upside Potential
+2025-05-06 03:28:00,847 - INFO - No ticker match for: QUALCOMM Incorporated (QCOM): Among Billionaire Chase Coleman’s Stocks with Huge Upside Potential
+2025-05-06 03:28:00,848 - INFO - No ticker match for: Applied Materials, Inc. (AMAT): Among Billionaire Chase Coleman’s Stocks with Huge Upside Potential
+2025-05-06 03:28:00,848 - INFO - No ticker match for: UnitedHealth Group (UNH): Among Billionaire Chase Coleman’s Stocks with Huge Upside Potential

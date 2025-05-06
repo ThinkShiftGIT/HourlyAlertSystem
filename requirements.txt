@@ -2,3 +2,4 @@ flask
 requests
 feedparser
 textblob
+waitress

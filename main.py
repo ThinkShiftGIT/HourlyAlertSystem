@@ -3,86 +3,55 @@ import time
 import requests
 import threading
 import feedparser
+import hashlib
 from textblob import TextBlob
 from flask import Flask
-from datetime import datetime, timedelta
+from waitress import serve
 
-# === Flask app to keep Replit alive ===
+# === Flask app to keep alive ===
 app = Flask(__name__)
 
 
 @app.route('/')
 def home():
-    return "Bot is running"
+    return "Bot is alive"
 
 
 def run_server():
-    app.run(host='0.0.0.0', port=8080)
+    serve(app, host='0.0.0.0', port=8080)
 
 
 def keep_alive():
-    t = threading.Thread(target=run_server)
-    t.start()
+    thread = threading.Thread(target=run_server)
+    thread.start()
 
 
-# === Secrets from Replit Environment ===
+# === Load env variables ===
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-FINNHUB_API_KEY = os.getenv("FINNHUB_API_KEY")
+CHAT_ID = '1654552128'
 
-# === Multiple Telegram Users ===
-CHAT_IDS = [
-    '1654552128',  # Add more Telegram user chat IDs here
-    # 'another_chat_id',
-]
-
-# === Track high liquidity tickers ===
+# === Highly liquid U.S. equities ===
 liquid_tickers = [
-    'AAPL', 'TSLA', 'SPY', 'MSFT', 'AMD', 'NVDA', 'GOOG', 'META', 'NFLX',
-    'DIS', 'BABA', 'INTC', 'BA', 'NKE', 'CRM'
+    'AAPL', 'TSLA', 'SPY', 'MSFT', 'AMD', 'GOOG', 'META', 'NVDA', 'NFLX',
+    'AMZN', 'BA', 'JPM', 'BAC', 'INTC', 'DIS'
 ]
 
-# === Avoid duplicate alerts ===
-alerted_titles = set()
+# === Track previously sent alerts using a hash set ===
+sent_hashes = set()
 
 
-# === Telegram Alert Function ===
+# === Send message to Telegram ===
 def send_telegram_alert(message):
-    for chat_id in CHAT_IDS:
-        url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-        data = {"chat_id": chat_id, "text": message, "parse_mode": "Markdown"}
-        try:
-            response = requests.post(url, data=data)
-            response.raise_for_status()
-            print(f"✅ Alert sent to {chat_id}")
-        except Exception as e:
-            print(f"❌ Error sending alert to {chat_id}: {e}")
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+    data = {"chat_id": CHAT_ID, "text": message, "parse_mode": "Markdown"}
+    try:
+        requests.post(url, data=data)
+        print("✅ Alert sent.")
+    except Exception as e:
+        print(f"❌ Failed to send alert: {e}")
 
 
-# === Trade Alert Formatter ===
-def send_trade_alert(ticker, headline, direction):
-    message = f"""
-🚨 *Market News Alert*
-🕒 Date/Time: {time.strftime('%Y-%m-%d %H:%M')} (UTC-5)
-📰 *News:* {headline}
-🔄 *Impact:* {direction}
-
-🎯 *Trade Setup*
-• *Ticker:* {ticker}
-• *Strategy:* Long {'Call' if direction == 'Bullish' else 'Put'}
-• *Legs:*
-   – Buy 1× {'Call' if direction == 'Bullish' else 'Put'} @ ITM strike (Exp in 2 weeks)
-• *Reason:* {direction} sentiment or earnings catalyst
-• *POP:* Estimated >70%
-• *Max Risk:* $200
-• *Entry:* ASAP
-• *Exit Rule:* 50% profit or before expiration
-
-🔔 *Next Steps:* Monitor position; exit-alert will follow if thresholds hit.
-"""
-    send_telegram_alert(message)
-
-
-# === Ticker Matcher ===
+# === Match ticker in news ===
 def match_ticker(text):
     for ticker in liquid_tickers:
         if ticker in text.upper():
@@ -90,60 +59,60 @@ def match_ticker(text):
     return None
 
 
-# === Yahoo Finance News Sentiment Scan ===
+# === Alert format ===
+def send_trade_alert(ticker, headline, sentiment):
+    direction = "Bullish" if sentiment > 0 else "Bearish"
+    message = f"""
+🚨 *Market News Alert*
+🕒 Date/Time: {time.strftime('%Y-%m-%d %H:%M')} (UTC-5)
+📰 *Headline:* {headline}
+🔄 *Impact:* {direction}
+
+🎯 *Trade Setup*
+• *Ticker:* {ticker}
+• *Strategy:* Long {'Call' if direction == 'Bullish' else 'Put'}
+• *Strike:* ATM
+• *Expiration:* 2 weeks out
+• *Est. Contract Price:* ~$180
+• *Reason:* Strong sentiment from real-time news
+• *POP:* Likely >70% based on event-driven catalyst
+• *Entry:* ASAP
+• *Exit Rule:* 50% profit or 3 days before expiration
+
+🔔 *Action:* Monitor trade; follow-up alert if exit rule is triggered.
+"""
+    send_telegram_alert(message)
+
+
+# === News fetch and analysis ===
 def fetch_and_analyze_news():
-    print("🔍 Checking news...")
-    rss_url = "https://finance.yahoo.com/news/rssindex"
-    feed = feedparser.parse(rss_url)
+    print("🔍 Scanning Yahoo Finance RSS...")
+    feed = feedparser.parse("https://finance.yahoo.com/news/rssindex")
 
     for entry in feed.entries:
         title = entry.title
         summary = entry.get('summary', '')
-        combined = f"{title} {summary}"
+        content = f"{title} {summary}"
+        news_hash = hashlib.sha256(content.encode()).hexdigest()
 
-        if title in alerted_titles:
+        # Skip if already alerted
+        if news_hash in sent_hashes:
             continue
 
-        sentiment = TextBlob(combined).sentiment.polarity
-        print(f"📰 Title: {title}")
-        print(f"🧠 Sentiment Score: {sentiment:.3f}")
-
-        if abs(sentiment) > 0.2:
-            matched_ticker = match_ticker(combined)
+        sentiment_score = TextBlob(content).sentiment.polarity
+        if abs(sentiment_score) >= 0.3:
+            matched_ticker = match_ticker(content)
             if matched_ticker:
-                direction = "Bullish" if sentiment > 0 else "Bearish"
-                send_trade_alert(matched_ticker, title, direction)
-                alerted_titles.add(title)
-                break  # only one alert per cycle
+                send_trade_alert(matched_ticker, title, sentiment_score)
+                sent_hashes.add(news_hash)
 
 
-# === Earnings Calendar Scan (Finnhub) ===
-def fetch_earnings_alerts():
-    today = datetime.utcnow().date()
-    tomorrow = today + timedelta(days=1)
-    url = f"https://finnhub.io/api/v1/calendar/earnings?from={today}&to={tomorrow}&token={FINNHUB_API_KEY}"
-
-    try:
-        response = requests.get(url)
-        data = response.json()
-        earnings = data.get("earningsCalendar", [])
-        for report in earnings:
-            ticker = report.get("symbol")
-            if ticker in liquid_tickers and ticker not in alerted_titles:
-                alert = f"{ticker} has earnings on {report.get('date')} (before/after market)"
-                send_trade_alert(ticker, alert, "Mixed")
-                alerted_titles.add(ticker)
-    except Exception as e:
-        print(f"❌ Error fetching earnings: {e}")
-
-
-# === Main Loop ===
+# === Run the bot ===
 def main():
     keep_alive()
     while True:
-        fetch_earnings_alerts()
         fetch_and_analyze_news()
-        time.sleep(600)  # Check every 10 minutes
+        time.sleep(300)  # 5 minutes
 
 
 if __name__ == "__main__":
