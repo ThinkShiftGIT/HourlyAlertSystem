@@ -1,8 +1,7 @@
 Flask
 waitress
 APScheduler
-tenacity
+requests
 feedparser
 beautifulsoup4
-requests
 vaderSentiment
