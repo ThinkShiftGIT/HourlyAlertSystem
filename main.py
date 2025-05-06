@@ -82,7 +82,9 @@ sentiment_analyzer = SentimentIntensityAnalyzer()
 # === Telegram Alert ===
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
 def send_telegram_alert(msg: str):
+    from requests.exceptions import HTTPError as ReqHTTPError
     for cid in CHAT_IDS:
+        resp = None
         try:
             resp = requests.post(
                 f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
@@ -91,8 +93,40 @@ def send_telegram_alert(msg: str):
             resp.raise_for_status()
             alerts_sent.inc()
             time.sleep(1)
+        except ReqHTTPError as http_err:
+            # Log Telegram API error details
+            try:
+                error_info = resp.json()
+            except Exception:
+                error_info = resp.text if resp is not None else str(http_err)
+            logger.error(f"Telegram API HTTPError for chat {cid}: {error_info}")
+            errors.inc()
+            raise
         except Exception as e:
-            logger.error(f"Telegram send error: {e}")
+            logger.error(f"Unexpected error sending to chat {cid}: {e}")
+            errors.inc()
+            raise(msg: str):
+    for cid in CHAT_IDS:
+        try:
+            resp = requests.post(
+                f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
+                data={'chat_id': cid, 'text': msg[:4096]}
+            )
+            try:
+                resp.raise_for_status()
+            except requests.exceptions.HTTPError as http_err:
+                # Log full API error
+                try:
+                    error_info = resp.json()
+                except Exception:
+                    error_info = resp.text
+                logger.error(f"Telegram API HTTPError {resp.status_code}: {error_info}")
+                errors.inc()
+                raise
+            alerts_sent.inc()
+            time.sleep(1)
+        except Exception as e:
+            logger.error(f"Telegram send error for chat {cid}: {e}")
             errors.inc()
             raise
 
