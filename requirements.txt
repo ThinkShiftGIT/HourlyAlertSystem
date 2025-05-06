@@ -1,10 +1,8 @@
 Flask
+waitress
 APScheduler
 tenacity
 feedparser
-requests
 beautifulsoup4
+requests
 vaderSentiment
-prometheus-client
-sentry-sdk
-waitress
