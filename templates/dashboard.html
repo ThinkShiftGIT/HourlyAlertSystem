@@ -1,58 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Real-Time Trade Alerts Dashboard</title>
-  <style>
-    body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 0; }
-    .container { max-width: 900px; margin: auto; padding: 20px; background: white; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-    h1 { color: #333; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { padding: 12px; border-bottom: 1px solid #ddd; text-align: left; }
-    th { background: #333; color: white; }
-    .alert { padding: 10px; margin-top: 20px; background: #e7f3fe; border-left: 5px solid #2196F3; }
-    .footer { text-align: center; margin-top: 40px; color: #888; font-size: 14px; }
-  </style>
+    <meta charset="UTF-8">
+    <title>RealTime TradeBot Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: Arial, sans-serif; background: #f5f5f5; margin: 0; padding: 0; }
+        header { background: #20232a; color: #61dafb; padding: 1rem; text-align: center; }
+        .container { padding: 2rem; }
+        h2 { color: #20232a; }
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+            margin-bottom: 1.5rem;
+            padding: 1.5rem;
+        }
+        .card pre {
+            background: #f0f0f0;
+            padding: 1rem;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        footer {
+            text-align: center;
+            font-size: 0.9rem;
+            color: #666;
+            padding: 2rem 0;
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <h1>🚀 Real-Time TradeBot Dashboard</h1>
-    <p>System Status: <strong style="color:green;">Running</strong></p>
-    <div class="alert">
-      Latest Alert:<br>
-      <strong>Ticker:</strong> AAPL<br>
-      <strong>Headline:</strong> Apple announces breakthrough in AI technology<br>
-      <strong>Sentiment:</strong> Bullish (0.60)<br>
-      <strong>Strike:</strong> 185<br>
-      <strong>Price:</strong> $3.25
+    <header>
+        <h1>📊 RealTime TradeBot Dashboard</h1>
+    </header>
+    <div class="container">
+        <div class="card">
+            <h2>Tracked Tickers</h2>
+            <div id="tickers"></div>
+        </div>
+
+        <div class="card">
+            <h2>Recent Alerts</h2>
+            <div id="alerts"></div>
+        </div>
+
+        <div class="card">
+            <h2>System Health</h2>
+            <pre id="health">Loading...</pre>
+        </div>
     </div>
 
-    <table>
-      <thead>
-        <tr>
-          <th>Ticker</th>
-          <th>Avg Sentiment</th>
-          <th>Last Alert</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>AAPL</td>
-          <td>+0.45</td>
-          <td>Today @ 9:35am</td>
-        </tr>
-        <tr>
-          <td>TSLA</td>
-          <td>-0.20</td>
-          <td>Yesterday</td>
-        </tr>
-      </tbody>
-    </table>
+    <footer>
+        Built with ❤️ using Flask and Telegram API
+    </footer>
 
-    <div class="footer">
-      &copy; 2025 RealTimeTradeBot &mdash; Powered by Flask + Telegram
-    </div>
-  </div>
+    <script>
+        async function loadData() {
+            try {
+                const tickersRes = await fetch('/telegram/list_tickers');
+                const tickersData = await tickersRes.json();
+                document.getElementById('tickers').innerText = tickersData.result || 'No data';
+
+                const alertsRes = await fetch('/logs/alerts.json');
+                const alertsData = await alertsRes.json();
+                document.getElementById('alerts').innerHTML = alertsData.slice(-5).map(entry => {
+                    return `<div><strong>${entry.timestamp}</strong><br><code>${entry.message}</code></div>`;
+                }).join('<hr>');
+
+                const healthRes = await fetch('/health');
+                const healthData = await healthRes.json();
+                document.getElementById('health').innerText = JSON.stringify(healthData, null, 2);
+            } catch (e) {
+                document.getElementById('health').innerText = 'Error loading data';
+                console.error(e);
+            }
+        }
+
+        loadData();
+    </script>
 </body>
 </html>
