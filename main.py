@@ -82,12 +82,19 @@ def send_telegram_alert(message, chat_ids=CHAT_IDS):
     for chat_id in chat_ids:
         try:
             url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-            data = {"chat_id": chat_id.strip(), "text": message[:4096], "parse_mode": "Markdown"}
+            data = {
+                "chat_id": chat_id.strip(),
+                "text": message[:4096],
+                "parse_mode": "Markdown"
+            }
+            logger.info(f"📤 Sending alert to Telegram chat ID {chat_id.strip()}")
             response = requests.post(url, data=data)
+            logger.info(f"📨 Telegram response: {response.status_code} - {response.text}")
             response.raise_for_status()
-            logger.info(f"Alert sent to chat ID {chat_id.strip()}: {message}")
+            logger.info(f"✅ Alert sent successfully to {chat_id.strip()}")
         except Exception as e:
-            logger.error(f"Failed to send alert to {chat_id.strip()}: {e}")
+            logger.error(f"❌ Telegram alert failed for {chat_id.strip()}: {e}")
+            raise
 
 # === Option Data Fetch ===
 def get_option_data(ticker: str) -> Tuple[Optional[float], Optional[float]]:
