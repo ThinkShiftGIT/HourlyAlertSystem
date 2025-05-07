@@ -58,7 +58,7 @@
     <script>
         async function loadData() {
             try {
-                const tickersRes = await fetch('/telegram/list_tickers');
+                const tickersRes = await fetch('/tickers');
                 const tickersData = await tickersRes.json();
                 document.getElementById('tickers').innerText = tickersData.result || 'No data';
 
