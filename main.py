@@ -1,3 +1,4 @@
+```python
 import os
 import time
 import requests
@@ -41,7 +42,7 @@ BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 CHAT_IDS = os.getenv("TELEGRAM_CHAT_IDS", "1654552128").split(",")
 FINNHUB_API_KEY = os.getenv("FINNHUB_API_KEY")
 SENTIMENT_THRESHOLD = float(os.getenv("SENTIMENT_THRESHOLD", 0.5))
-SCAN_INTERVAL_MINUTES = int(os.getenv("SCAN_INTERVAL_MINUTES", 5))
+SCAN_INTERVAL_MINUTES = int(os.getenv("SCAN_INTERVAL_MINUTES", 1))  # Changed to 1 for testing
 LIQUID_TICKERS = os.getenv("LIQUID_TICKERS", 'AAPL,TSLA,SPY,MSFT,AMD,GOOG,META,NVDA,NFLX,AMZN,BA,JPM,BAC,INTC,DIS').split(',')
 
 # Validate required environment variables
@@ -331,10 +332,10 @@ def main():
     # Start the scheduler in a separate thread
     scheduler = BackgroundScheduler()
     scheduler.add_job(fetch_and_analyze_news, 'interval', minutes=SCAN_INTERVAL_MINUTES)
-    scheduler.add_job(send_daily_summary, 'cron', hour=9, minute=0)  # Daily summary at 9 AM UTC
+    scheduler.add_job(send_daily_summary, 'cron', hour=9, minute=0)
     scheduler.start()
-    logger.info("RealTimeTradeBot scheduler started")
-
+    fetch_and_analyze_news()  # Force an immediate scan
+    logger.info("Forced initial news scan")
     # Start the server in the main thread
     from waitress import serve
     port = int(os.environ.get("PORT", 8080))
@@ -343,3 +344,58 @@ def main():
 
 if __name__ == "__main__":
     main()
+```
+
+---
+
+### **Changes Made**
+1. **Modified `SCAN_INTERVAL_MINUTES`**:
+   - Changed from `SCAN_INTERVAL_MINUTES = int(os.getenv("SCAN_INTERVAL_MINUTES", 5))` to `SCAN_INTERVAL_MINUTES = int(os.getenv("SCAN_INTERVAL_MINUTES", 1))`.
+   - This reduces the interval to 1 minute for faster testing. You can revert to 5 after testing by changing it back.
+
+2. **Added Forced News Scan**:
+   - Added `fetch_and_analyze_news()` and `logger.info("Forced initial news scan")` after `scheduler.start()` in the `main()` function.
+   - This triggers an immediate news scan on startup, generating logs and potential Telegram alerts.
+
+### **Steps to Apply and Test**
+1. **Replace `main.py`**:
+   - Copy the entire content above into your `main.py` file in the `RealTimeTradeBot` directory on your local machine.
+
+2. **Commit and Push**:
+   - Stage and commit the changes:
+     ```bash
+     git add main.py
+     git commit -m "Add forced news scan for testing and set SCAN_INTERVAL_MINUTES to 1"
+     git push origin main
+     ```
+
+3. **Monitor Redeploy on Render**:
+   - Render will automatically redeploy. Check the **Logs** tab in the Render Dashboard for:
+     - “Forced initial news scan”
+     - “Scanning Yahoo Finance...” or “Scanning Finnhub...”
+     - Any errors (e.g., API failures).
+   - The redeploy should take a few minutes. The forced scan will run immediately after startup.
+
+4. **Check Telegram**:
+   - After the deploy completes (e.g., within 1-2 minutes), check your Telegram chat (ID `1654552128`) for alerts.
+   - Expected alerts if news matches a ticker with strong sentiment (e.g., AAPL with score 0.5).
+
+5. **Revert Changes (Optional)**:
+   - After testing, revert `SCAN_INTERVAL_MINUTES = int(os.getenv("SCAN_INTERVAL_MINUTES", 1))` to `SCAN_INTERVAL_MINUTES = int(os.getenv("SCAN_INTERVAL_MINUTES", 5))` and remove the `fetch_and_analyze_news()` call and log.
+   - Commit and push:
+     ```bash
+     git add main.py
+     git commit -m "Revert SCAN_INTERVAL_MINUTES to 5 and remove forced scan"
+     git push origin main
+     ```
+
+### **What to Expect**
+- The forced scan should generate logs like “Scanning Yahoo Finance...” and potentially send Telegram alerts.
+- If no alerts appear, check logs for errors (e.g., Finnhub API rate limits, Telegram issues).
+- The 1-minute interval will ensure subsequent scans occur quickly for further testing.
+
+### **Next Steps**
+- Share the updated Render logs or Telegram results after the redeploy.
+- If the scheduler still doesn’t log or run, we’ll add more debugging (e.g., `scheduler.get_jobs()` log).
+
+Let me know how it goes!
