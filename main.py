@@ -1,3 +1,5 @@
+# main.py — Full Production Version with Enhancements
+
 import os
 import time
 import logging
@@ -13,255 +15,188 @@ from flask import Flask, jsonify, render_template_string
 from apscheduler.schedulers.background import BackgroundScheduler
 from tenacity import retry, stop_after_attempt, wait_exponential
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+from logging.handlers import RotatingFileHandler
 
-# === Logging ===
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)-8s %(message)s")
+# === Logging (to file + console) ===
+LOG_FILE = "alerts.log"
+handler = RotatingFileHandler(LOG_FILE, maxBytes=1000000, backupCount=3)
+logging.basicConfig(
+    handlers=[handler],
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)-8s %(message)s"
+)
 logger = logging.getLogger(__name__)
 
-# === Flask App ===
+# === Flask ===
 app = Flask(__name__)
 app.last_scan = None
+last_alerts = deque(maxlen=20)
 
 # === Environment Variables ===
-BOT_TOKEN             = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
-CHAT_IDS_RAW          = os.getenv("TELEGRAM_CHAT_IDS", "").strip()
-FINNHUB_API_KEY       = os.getenv("FINNHUB_API_KEY", "").strip()
-SENTIMENT_THRESHOLD   = float(os.getenv("SENTIMENT_THRESHOLD", "0.1"))
+BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
+CHAT_IDS = [c.strip() for c in os.getenv("TELEGRAM_CHAT_IDS", "").split(",") if c.strip()]
+FINNHUB_API_KEY = os.getenv("FINNHUB_API_KEY", "").strip()
+SENTIMENT_THRESHOLD = float(os.getenv("SENTIMENT_THRESHOLD", "0.2"))
 SCAN_INTERVAL_MINUTES = int(os.getenv("SCAN_INTERVAL_MINUTES", "5"))
-LIQUID_TICKERS        = os.getenv("LIQUID_TICKERS", "AAPL,TSLA,SPY,MSFT,AMD,GOOG").split(",")
 
-# Validate required vars
-missing = []
-if not BOT_TOKEN:       missing.append("TELEGRAM_BOT_TOKEN")
-if not CHAT_IDS_RAW:    missing.append("TELEGRAM_CHAT_IDS")
-if not FINNHUB_API_KEY: missing.append("FINNHUB_API_KEY")
-if missing:
-    logger.error("Missing env vars: %s", ", ".join(missing))
-    raise RuntimeError(f"Missing environment variables: {', '.join(missing)}")
+if not all([BOT_TOKEN, CHAT_IDS, FINNHUB_API_KEY]):
+    raise RuntimeError("Missing one or more required environment variables.")
 
-CHAT_IDS = [c.strip() for c in CHAT_IDS_RAW.split(",") if c.strip()]
-
-# === State ===
-sent_hashes            = deque(maxlen=1000)
+# === Globals ===
+LIQUID_TICKERS = []
+sent_hashes = deque(maxlen=1000)
 sent_hashes_timestamps = {}
-sent_hashes_lock       = threading.Lock()
-
-option_cache           = {}
-option_cache_timestamps= {}
-option_cache_lock      = threading.Lock()
-
-# === Sentiment Analyzer ===
+sent_hashes_lock = threading.Lock()
+option_cache = {}
+option_cache_timestamps = {}
+option_cache_lock = threading.Lock()
 analyzer = SentimentIntensityAnalyzer()
 
-# === Telegram Alert ===
-@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
-def send_telegram_alert(message: str):
-    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+# === Utilities ===
+def get_top_liquid_tickers():
+    try:
+        url = f"https://finnhub.io/api/v1/stock/symbol?exchange=US&token={FINNHUB_API_KEY}"
+        r = requests.get(url, timeout=10)
+        symbols = r.json()
+        # Filter top by volume using quote endpoint
+        liquid = []
+        for sym in symbols[:200]:
+            q = requests.get(f"https://finnhub.io/api/v1/quote?symbol={sym['symbol']}&token={FINNHUB_API_KEY}").json()
+            volume = q.get("v", 0)
+            liquid.append((sym['symbol'], volume))
+        liquid.sort(key=lambda x: -x[1])
+        return [s[0] for s in liquid[:50]]
+    except Exception as e:
+        logger.warning("Failed to update top tickers: %s", e)
+        return LIQUID_TICKERS
+
+def refresh_ticker_list():
+    global LIQUID_TICKERS
+    LIQUID_TICKERS = get_top_liquid_tickers()
+    logger.info("Refreshed top tickers: %s", ', '.join(LIQUID_TICKERS[:5]))
+
+@retry(stop=stop_after_attempt(3), wait=wait_exponential())
+def send_telegram_alert(message):
     for chat_id in CHAT_IDS:
-        data = {
-            "chat_id": chat_id,
-            "text": message[:4096],
-            "parse_mode": "Markdown",
-        }
-        resp = requests.post(url, data=data, timeout=10)
-        if not resp.ok:
-            info = resp.json()
-            logger.error("Telegram API HTTPError for chat %s: %s", chat_id, info)
-            resp.raise_for_status()
-        logger.info("Alert sent to %s", chat_id)
+        resp = requests.post(
+            f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
+            data={"chat_id": chat_id, "text": message[:4096], "parse_mode": "Markdown"},
+            timeout=10
+        )
+        if resp.ok:
+            logger.info("Alert sent to %s", chat_id)
+        else:
+            logger.error("Failed to send to %s: %s", chat_id, resp.text)
+
+        last_alerts.appendleft((datetime.utcnow(), message[:120]))
         time.sleep(1)
 
-# === Helpers ===
-def match_ticker(text: str):
+def match_ticker(text):
     txt = text.upper()
-    return [t for t in LIQUID_TICKERS if re.search(rf"\b{re.escape(t)}\b", txt)]
+    return [t for t in LIQUID_TICKERS if re.search(rf"\\b{re.escape(t)}\\b", txt)]
 
-def get_option_data(ticker: str):
+def get_option_data(ticker):
     now = datetime.utcnow()
     with option_cache_lock:
         if ticker in option_cache and now - option_cache_timestamps[ticker] < timedelta(minutes=15):
             return option_cache[ticker]
 
     try:
-        q = requests.get(
-            f"https://finnhub.io/api/v1/quote?symbol={ticker}&token={FINNHUB_API_KEY}",
-            timeout=5,
-        ).json()
-        price = q.get("c") or 0
-        if not price:
-            raise ValueError("No current price")
-
-        oc = requests.get(
-            f"https://finnhub.io/api/v1/stock/option-chain?symbol={ticker}&token={FINNHUB_API_KEY}", 
-            timeout=5
-        ).json()
-
-        best = (None, None, float("inf"))
-        for contract in oc.get("data", []):
+        price = requests.get(f"https://finnhub.io/api/v1/quote?symbol={ticker}&token={FINNHUB_API_KEY}").json().get("c", 0)
+        chain = requests.get(f"https://finnhub.io/api/v1/stock/option-chain?symbol={ticker}&token={FINNHUB_API_KEY}").json()
+        best = (None, None, float('inf'))
+        for contract in chain.get("data", []):
             for call in contract.get("options", {}).get("CALL", []):
                 strike = call.get("strike", 0)
                 diff = abs(strike - price)
                 if diff < best[2]:
                     last = call.get("lastPrice") or call.get("ask") or 0
                     best = (strike, last, diff)
-
-        result = (best[0], best[1]) if best[0] is not None else (None, None)
-        with option_cache_lock:
-            option_cache[ticker] = result
-            option_cache_timestamps[ticker] = now
-        return result
-
+        option_cache[ticker] = (best[0], best[1])
+        option_cache_timestamps[ticker] = now
+        return best[0], best[1]
     except Exception as e:
-        logger.warning("get_option_data(%s) failed: %s", ticker, e)
+        logger.warning("Option fetch failed: %s", e)
         return None, None
 
-# === Core Logic ===
 def fetch_and_analyze_news():
     logger.info("Starting scan...")
     now = datetime.utcnow()
-    sources = [
-        ("rss", "https://finance.yahoo.com/news/rssindex"),
-        ("finnhub", "https://finnhub.io/api/v1/news"),
-    ]
-
-    for kind, url in sources:
-        logger.info("Scanning %s feed", kind)
-        articles = []
-
-        if kind == "rss":
-            feed = feedparser.parse(url)
-            for e in feed.entries:
-                published = e.get("published")
-                if published:
-                    try:
-                        dt = datetime.strptime(published, "%a, %d %b %Y %H:%M:%S %z")
-                        if now - dt.replace(tzinfo=None) > timedelta(hours=24):
-                            continue
-                    except:
-                        pass
-                title   = e.get("title", "")
-                summary = e.get("summary", "")
-                content = f"{title} {summary}"
-                articles.append((title, content))
-
-        else:  # finnhub
-            for ticker in LIQUID_TICKERS:
-                try:
-                    r = requests.get(f"{url}?symbol={ticker}&token={FINNHUB_API_KEY}", timeout=5)
-                    r.raise_for_status()
-                    for item in r.json():
-                        dt = datetime.utcfromtimestamp(item.get("datetime", 0))
-                        if now - dt > timedelta(hours=24):
-                            continue
-                        title   = item.get("headline", "")
-                        summary = item.get("summary", "")
-                        content = f"{title} {summary}"
-                        articles.append((title, content))
-                except Exception as e:
-                    logger.debug("Finnhub fetch for %s failed: %s", ticker, e)
-
-        for title, content in articles:
-            h = hashlib.sha256(content.encode()).hexdigest()
-            with sent_hashes_lock:
-                cutoff = now - timedelta(hours=24)
-                for k in list(sent_hashes_timestamps):
-                    if sent_hashes_timestamps[k] < cutoff:
-                        sent_hashes_timestamps.pop(k, None)
-                        try: sent_hashes.remove(k)
-                        except: pass
-
-                if h in sent_hashes:
-                    continue
-                sent_hashes.append(h)
-                sent_hashes_timestamps[h] = now
-
-            score   = analyzer.polarity_scores(content[:512])["compound"]
-            tickers = match_ticker(content)
-            logger.info("DEBUG: '%s' | score=%.2f | tickers=%s", title, score, tickers)
-
-            if abs(score) < SENTIMENT_THRESHOLD or not tickers:
+    articles = []
+    rss = feedparser.parse("https://finance.yahoo.com/news/rssindex")
+    for e in rss.entries:
+        try:
+            dt = datetime.strptime(e.get("published"), "%a, %d %b %Y %H:%M:%S %z")
+            if now - dt.replace(tzinfo=None) > timedelta(hours=24):
                 continue
+        except: continue
+        title = e.get("title", "")
+        summary = e.get("summary", "")
+        articles.append((title, f"{title} {summary}"))
 
-            direction = "Bullish" if score > 0 else "Bearish"
-            for t in tickers:
-                s, p = get_option_data(t)
-                if s is None or p is None:
-                    logger.info("Skipping %s: no option data", t)
-                    continue
+    for title, content in articles:
+        h = hashlib.sha256(content.encode()).hexdigest()
+        with sent_hashes_lock:
+            if h in sent_hashes: continue
+            sent_hashes.append(h)
+            sent_hashes_timestamps[h] = now
 
-                msg = (
-                    f"🚨 *Market News Alert*\n"
-                    f"🕒 {datetime.now():%Y-%m-%d %H:%M}\n"
-                    f"📰 {title}\n"
-                    f"🔄 {direction}\n\n"
-                    f"🎯 *Trade Setup*\n"
-                    f"• Ticker: {t}\n"
-                    f"• Side: {direction}\n"
-                    f"• Strike: {s}\n"
-                    f"• Expiration: 2 weeks out\n"
-                    f"• Est Price: ${p:.2f}\n"
-                    f"• Sentiment score: {score:.2f}\n"
-                )
-                send_telegram_alert(msg)
+        score = analyzer.polarity_scores(content[:512])["compound"]
+        tickers = match_ticker(content)
+        if abs(score) < SENTIMENT_THRESHOLD or not tickers:
+            continue
 
-    app.last_scan = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        direction = "Bullish" if score > 0 else "Bearish"
+        for t in tickers:
+            s, p = get_option_data(t)
+            if s is None or p is None: continue
+            msg = (
+                f"🚨 *Market News Alert*\n🕒 {datetime.now():%Y-%m-%d %H:%M}\n📰 {title}\n🔄 {direction}\n\n"
+                f"🎯 *Trade Setup*\n• Ticker: {t}\n• Side: {direction}\n• Strike: {s}\n• Exp: 2 weeks\n"
+                f"• Est Price: ${p:.2f}\n• Sentiment: {score:.2f}"
+            )
+            send_telegram_alert(msg)
+
+    app.last_scan = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
     logger.info("Scan complete.")
 
 # === Scheduler ===
 scheduler = BackgroundScheduler()
 scheduler.add_job(fetch_and_analyze_news, "interval", minutes=SCAN_INTERVAL_MINUTES)
+scheduler.add_job(refresh_ticker_list, "interval", hours=6)
 scheduler.start()
-logger.info("Scheduler started, every %d minutes", SCAN_INTERVAL_MINUTES)
+refresh_ticker_list()
 
-# === HTTP Endpoints ===
+# === Web Dashboard ===
 @app.route("/")
 def home():
     html = """
-    <!DOCTYPE html>
-    <html lang="en">
-      <head>
-        <meta charset="utf-8"/>
-        <title>RealTimeTradeBot Dashboard</title>
-        <style>
-          body { font-family: Arial, sans-serif; margin: 2rem; }
-          button { padding: 0.5rem 1rem; font-size: 1rem; }
-        </style>
-      </head>
-      <body>
-        <h1>✅ RealTimeTradeBot Dashboard</h1>
-        <p>Status: <strong>Healthy</strong></p>
-        <p>Last scan: <strong>{{ last_scan or "Never" }}</strong></p>
-        <button onclick="triggerScan()">Run Scan Now</button>
-        <script>
-          function triggerScan() {
-            fetch('/scan-now')
-              .then(r => r.text())
-              .then(alert)
-              .catch(console.error);
-          }
-        </script>
-      </body>
-    </html>
+    <h1>📈 RealTimeTradeBot Dashboard</h1>
+    <p><b>Status:</b> Healthy</p>
+    <p><b>Last Scan:</b> {{ last_scan or 'Never' }}</p>
+    <p><b>Top Tickers:</b> {{ tickers }}</p>
+    <h3>Recent Alerts</h3>
+    <ul>
+    {% for ts, msg in alerts %}<li><b>{{ ts }}</b>: {{ msg }}</li>{% endfor %}
+    </ul>
+    <button onclick="fetch('/scan-now').then(r => r.text()).then(alert)">Trigger Scan</button>
     """
-    return render_template_string(html, last_scan=app.last_scan)
+    return render_template_string(html, last_scan=app.last_scan, tickers=LIQUID_TICKERS[:5], alerts=list(last_alerts))
 
 @app.route("/health")
 def health():
-    return jsonify(status="healthy", last_scan=app.last_scan)
-
-@app.route("/test-alert")
-def test_alert():
-    try:
-        send_telegram_alert("🚀 Test alert: bot is online.")
-        return "Test alert sent.", 200
-    except Exception as e:
-        logger.error("Test-alert failed: %s", e)
-        return f"Test-alert failed: {e}", 500
+    return jsonify(status="healthy", last_scan=app.last_scan, top_tickers=LIQUID_TICKERS[:5])
 
 @app.route("/scan-now")
 def scan_now():
     threading.Thread(target=fetch_and_analyze_news, daemon=True).start()
-    return "On-demand scan triggered.", 200
+    return "Scan triggered", 200
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
+@app.route("/test-alert")
+def test_alert():
+    send_telegram_alert("🚀 Test alert from RealTimeTradeBot")
+    return "Alert sent", 200
+
+if __name__ == '__main__':
+    from waitress import serve
+    serve(app, host='0.0.0.0', port=int(os.getenv("PORT", 8080)))
