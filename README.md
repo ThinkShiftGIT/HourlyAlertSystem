@@ -1,107 +1,115 @@
-# 🚀 RealTimeTradeBot
+# 📈 RealTimeTradeBot
 
-A real-time trading signal alert bot that monitors news headlines and sends option trade alerts via Telegram using sentiment analysis. Deployed on [Render](https://render.com/), this bot ensures consistent uptime and delivery with auto-restarts and web hosting.
+**RealTimeTradeBot** is an automated real-time trading alert bot that scans news feeds and financial APIs for market-moving headlines. It uses sentiment analysis to detect bullish or bearish tones and sends actionable trade alerts via **Telegram**, optionally showing a **web dashboard** for status, logs, and diagnostics.
 
-## 🔍 Features
+---
 
-- Monitors Yahoo Finance RSS feed for high-impact headlines
-- Analyzes sentiment using TextBlob
-- Detects mentions of highly liquid US stocks
-- Sends well-structured trade alerts via Telegram
-- Uses hashed headlines to avoid duplicate alerts
-- Runs continuously via Flask + Waitress on Render
+## 🚀 Features
 
-## ⚙️ Technologies Used
+- ✅ **Real-time News Scanning** (RSS + Finnhub API)
+- 🧠 **Sentiment Analysis** using VADER
+- 🔁 **Dynamic Ticker Refresh** — top 50 most liquid U.S. stocks updated daily
+- 💬 **Telegram Alerts** (with fallback retries)
+- 🌐 **Flask Dashboard** — trigger scans and monitor status
+- 🗂️ **Scheduled Scans** with APScheduler
+- 🧪 **/health and /test-alert** endpoints for diagnostics
+- 📝 Optional **log file/email notifications** for monitoring
 
-- Python 3
-- Flask (API keep-alive)
-- TextBlob (sentiment analysis)
-- Feedparser (RSS parsing)
-- Telegram Bot API (alert delivery)
-- Waitress (production WSGI server)
-- Hosted on [Render](https://render.com/)
+---
 
-## 📦 Installation
+## 🧩 Requirements
 
-Clone the repo:
-```bash
-git clone https://github.com/ThinkShiftGIT/RealTimeTradeBot.git
-cd RealTimeTradeBot
-```
-
-Install dependencies:
 ```bash
 pip install -r requirements.txt
 ```
 
-Create a `.env` or use secrets to store:
+---
 
-```
-TELEGRAM_BOT_TOKEN=your_bot_token
-FINNHUB_API_KEY=your_finnhub_key  # Optional, for option data later
-```
+## 📄 Environment Variables
 
-## 🚀 Deploying to Render
+Set the following variables in a `.env` file or your hosting environment:
 
-1. Log in to [Render](https://render.com/)
-2. Create a new Web Service
-3. Connect your GitHub repo
-4. Use the following settings:
-   - Build command: `pip install -r requirements.txt`
-   - Start command: `python3 -m waitress --port=$PORT main:app`
-   - Environment Variables: Add your bot token and API keys
-5. Hit **Deploy**
-
-Live endpoint: [https://realtimetradebot.onrender.com](https://realtimetradebot.onrender.com)
-
-## 📡 Telegram Setup
-
-- Create a Telegram bot with [@BotFather](https://t.me/BotFather)
-- Get your bot token
-- Start a chat with your bot
-- Use this script to get your `chat_id`:
-
-```python
-import requests
-TOKEN = "YOUR_BOT_TOKEN"
-updates = requests.get(f"https://api.telegram.org/bot{TOKEN}/getUpdates").json()
-print(updates)
+```env
+TELEGRAM_BOT_TOKEN=your_bot_token_here
+TELEGRAM_CHAT_IDS=123456789,987654321
+FINNHUB_API_KEY=your_finnhub_api_key
+SENTIMENT_THRESHOLD=0.2
+SCAN_INTERVAL_MINUTES=5
+PORT=8080
 ```
 
-## 📈 Sample Alert
+- **TELEGRAM_BOT_TOKEN** – Get it from [@BotFather](https://t.me/BotFather)
+- **TELEGRAM_CHAT_IDS** – One or more comma-separated Telegram user/group chat IDs
+- **FINNHUB_API_KEY** – Get it from [Finnhub.io](https://finnhub.io)
+
+---
+
+## 🛠️ Running Locally
+
+```bash
+python main.py
+```
+
+Or, for production (via Waitress):
+
+```bash
+python3 -m waitress --port=$PORT main:app
+```
+
+---
+
+## 🌐 Web Interface
+
+Visit `http://localhost:8080/` for:
+
+- Last scan timestamp
+- One-click manual scan trigger
+- Healthy status confirmation
+
+---
+
+## 📬 Example Alert
 
 ```
 🚨 Market News Alert
-🕒 Date/Time: 2025-05-05 21:10 (UTC-5)
-📰 Headline: Apple to Boost AI Spend in 2025
-🔄 Impact: Bullish
+🕒 2025-05-07 10:35
+📰 Apple launches new AI chip for Macs
+🔄 Bullish
 
 🎯 Trade Setup
 • Ticker: AAPL
-• Strategy: Long Call
-• Strike: ATM
+• Side: Bullish
+• Strike: 180
 • Expiration: 2 weeks out
-• Est. Contract Price: ~$180
-• Reason: Strong sentiment from real-time news
-• POP: Likely >70% based on event-driven catalyst
-• Entry: ASAP
-• Exit Rule: 50% profit or 3 days before expiration
-
-🔔 Action: Monitor trade; follow-up alert if exit rule is triggered.
+• Est Price: $2.50
+• Sentiment score: 0.71
 ```
 
 ---
 
-## 💡 To-Do
+## 📦 Deployment Options
 
-- Integrate real-time option data via Tradier
-- Add support for multiple Telegram chat IDs
-- Expand news sources (e.g., Twitter, earnings feeds)
-
-## 📜 License
-
-MIT — free to use, modify, and share.
+- 🟢 **Fly.io** / **Render.com** / **Railway.app**
+- 💻 **VPS (e.g., DigitalOcean, EC2)** – Run `main.py` with `pm2` or `systemd`
+- 🐳 Docker support (optional future enhancement)
 
 ---
 
-Built with ❤️ by [ThinkShiftGIT](https://github.com/ThinkShiftGIT)
+## 🔧 Coming Soon / Optional Enhancements
+
+- 📈 Add chart snapshots or option Greeks in alerts
+- 🧠 LLM summarization of headlines
+- 📧 Email fallback alerts (e.g., via SMTP)
+- 📁 Logging to file with rotation
+
+---
+
+## 🧠 Author
+
+Temitope Adekola | [Telegram: @TemiAlpha](https://t.me/TemiAlpha)
+
+---
+
+## 📜 License
+
+MIT License – free to use, modify, and share.
