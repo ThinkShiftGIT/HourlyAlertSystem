@@ -1,140 +1,114 @@
-# 📈 Real-Time Trade Alert Bot
+# 📈 Real-Time Stock News Sentiment Alert System
 
-A real-time Flask-based Telegram bot that scans financial news and options data, performs sentiment analysis, and sends actionable stock trade alerts. Built with free-tier APIs from **Polygon.io**, **Marketaux**, and **Yahoo Finance**, with intelligent fallback and full logging for reliability.
+This Flask-based application monitors real-time stock market news, extracts relevant sentiment, and alerts the user via Telegram when strong bullish or bearish signals are detected for tracked tickers. It also includes a dashboard to monitor alerts and system health.
 
 ---
 
 ## 🚀 Features
 
-- 🔄 **Live News Feed** from Marketaux + Yahoo RSS  
-- 🧠 **Simple Sentiment Analysis** (custom rule-based)  
-- 🧾 **Options Chain Analysis** using Polygon.io  
-- 🛠️ **Fallback to Yahoo Finance** when Polygon fails  
-- 📬 **Telegram Alerts** with trade setup details  
-- 🗓️ **Scheduled Jobs** using APScheduler  
-- 💡 **Custom Ticker List Management** via Telegram  
-- 🐛 **Detailed Logs** for troubleshooting and deployment  
+- 🔄 **Real-Time News Feed** (via [Marketaux API](https://www.marketaux.com/))
+- 💬 **Sentiment Analysis** (via VADER)
+- 📈 **Live Quote and Option Chain Lookup** (via [Polygon.io API](https://polygon.io/))
+- 📲 **Telegram Alert Delivery**
+- 🧠 **Duplicate Detection** via content hashing
+- 🌐 **Web Dashboard** for live monitoring
+- 🧾 **alerts.json Logging** (last 100 alerts)
+- ⏰ **Scheduler** with configurable scan frequency
 
 ---
 
-## 📦 Tech Stack
+## 📊 Tracked Tickers
 
-- **Backend**: Python + Flask  
-- **Scheduler**: APScheduler  
-- **Alert Delivery**: Telegram Bot API  
-- **News API**: Marketaux, Yahoo RSS  
-- **Option Data API**: Polygon.io  
-- **Logging**: Python logging module  
-- **Deployment**: [Render.com](https://render.com)  
-
----
-
-## 🔧 Installation
-
-### 1. Clone the Repository
-
-```bash
-git clone https://github.com/yourusername/realtimetradebot.git
-cd realtimetradebot
-```
-
-### 2. Install Dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### 3. Set Environment Variables
-
-Use Render's **Environment tab** or a local `.env` file (if testing locally):
-
-```env
-TELEGRAM_BOT_TOKEN=your_telegram_bot_token
-TELEGRAM_CHAT_IDS=123456789
-MARKETAUX_API_KEY=your_marketaux_api_key
-POLYGON_API_KEY=your_polygon_api_key
-SENTIMENT_THRESHOLD=0.3
-SCAN_INTERVAL_MINUTES=5
-LIQUID_TICKERS=AAPL,TSLA,SPY,NVDA,MSFT,GOOG
-```
-
-> ⚠️ **Do not commit `.env` to GitHub**
-
----
-
-## ▶️ Usage
-
-### 🔁 Trigger a Mock Alert
-
-Test if everything is working:
-
-```bash
-curl https://your-app.onrender.com/test/mock_alert
-```
-
-You should see a trade alert in your Telegram.
-
----
-
-### 🧪 Telegram Bot Commands
-
-Visit your bot and send:
-
-- `/start` — wake the bot  
-- `/list_tickers` — view tracked tickers  
-- `/add_ticker_TSLA` — add a ticker  
-- `/remove_ticker_TSLA` — remove a ticker  
-
----
-
-## 📜 Example Alert
+This deployment currently monitors the following 20 tickers:
 
 ```
-🚨 Market News Alert  
-🕒 2025-05-07 08:45 (UTC-5)  
-📰 Apple announces breakthrough in AI technology  
-🔄 Bullish  
-📡 Marketaux  
-
-🎯 Trade Setup  
-• Ticker: AAPL  
-• Strategy: Long Call  
-• Strike: 185  
-• Expiration: 2 weeks  
-• Est. Contract Price: $2.15  
-• Reason: Sentiment score 0.60  
-• Entry: ASAP  
-• Exit: 50% profit or 3 days before expiration  
+NVDA, TSLA, AAPL, AMZN, PLTR, AMD, SMCI, HIMS, F, LCID,  
+UPST, RIVN, MSFT, BAC, SOFI, NU, HOOD, MARA, PLUG, QBTS
 ```
 
 ---
 
-## 📂 Project Structure
+## ⚙️ Environment Variables
+
+| Variable                | Required | Description                                |
+|-------------------------|----------|--------------------------------------------|
+| `TELEGRAM_BOT_TOKEN`    | ✅       | Telegram bot API token                     |
+| `TELEGRAM_CHAT_IDS`     | ✅       | Comma-separated list of Telegram chat IDs  |
+| `POLYGON_API_KEY`       | ✅       | API key for polygon.io                     |
+| `MARKETAUX_API_KEY`     | ✅       | API key for Marketaux                      |
+| `SCAN_INTERVAL_MINUTES` | Optional | How often to scan for news (default: 15)   |
+| `SENTIMENT_THRESHOLD`   | Optional | e.g., `0.6` for strong signal filtering     |
+| `TICKERS`               | Optional | Comma-separated list of tickers to scan    |
+
+---
+
+## 📂 File Structure
 
 ```
-├── main.py               # Main Flask app  
-├── requirements.txt      # Python dependencies  
-├── README.md             # Project documentation  
+.
+├── main.py                 # Main application file
+├── alerts.json            # Rolling log of recent alerts
+├── requirements.txt       # Python dependencies
+├── templates/
+│   └── dashboard.html     # Web dashboard HTML
 ```
 
 ---
 
-## 📈 APIs Used
+## 🖥️ Web Dashboard
 
-- [Polygon.io](https://polygon.io/)  
-- [Marketaux](https://www.marketaux.com/)  
-- [Yahoo Finance RSS](https://finance.yahoo.com/news/rssindex)  
-- [Telegram Bot API](https://core.telegram.org/bots/api)  
+Visit `/dashboard` on your deployed app to:
+- View **tracked tickers**
+- See **recent alerts**
+- Monitor **system health status**
+
+Example:
+```
+https://your-app.onrender.com/dashboard
+```
 
 ---
 
-## 🛡️ License
+## 📡 Telegram Alert Example
 
-MIT License — free for personal and commercial use.
+```
+🚨 Trade Alert: TSLA
+📰 Tesla reports record deliveries for Q2
+📅 2025-05-07 11:34:12 UTC
+
+*Market Price:* $187.45  
+*Option Strike:* $190.00  
+*Ask Price:* $4.10  
+*Source:* Marketaux
+```
 
 ---
 
-## 🙌 Author
+## 🔒 Security Note
 
-Built by **Temitope Adekola** | AI Engineer + Trading Strategist  
-Need help with enhancements or hosting? Open an issue or reach out via [Telegram](https://t.me/your_username).
+This app uses free APIs. You should:
+- Keep your GitHub repo **private**
+- Never expose your `.env` or secrets in public commits
+- Rotate API keys periodically
+
+---
+
+## ✅ To-Do / Future Enhancements
+
+- [ ] UI to manage tickers from the dashboard
+- [ ] Add email or SMS fallback
+- [ ] Store alerts in database or Google Sheets
+- [ ] Support sentiment-based trading strategy suggestions
+
+---
+
+## 🧠 Credits
+
+Built by [Temitope Adekola](https://github.com/yourusername)  
+Powered by: Flask, Telegram API, Marketaux, Polygon.io, VADER Sentiment
+
+---
+
+## 📝 License
+
+MIT License
