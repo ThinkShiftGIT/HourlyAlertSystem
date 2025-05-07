@@ -13,16 +13,19 @@ from flask import Flask
 from apscheduler.schedulers.background import BackgroundScheduler
 from tenacity import retry, stop_after_attempt, wait_exponential
 
+# === Logging Setup ===
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+# Optional: BeautifulSoup for full article scraping
 try:
     from bs4 import BeautifulSoup
     BS4_AVAILABLE = True
 except ImportError:
     BS4_AVAILABLE = False
-    logging.warning("BeautifulSoup (bs4) not available. Article scraping will be disabled.")
+    logger.warning("BeautifulSoup (bs4) not available. Article scraping will be disabled.")
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
-
+# === Flask Setup ===
 app = Flask(__name__)
 
 @app.route('/')
@@ -33,6 +36,7 @@ def home():
 def health():
     return {"status": "healthy", "timestamp": time.strftime('%Y-%m-%d %H:%M:%S')}
 
+# === Environment Variables ===
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 CHAT_IDS = os.getenv("TELEGRAM_CHAT_IDS", "1654552128").split(",")
 FINNHUB_API_KEY = os.getenv("FINNHUB_API_KEY")
@@ -43,6 +47,7 @@ LIQUID_TICKERS = os.getenv("LIQUID_TICKERS", 'AAPL,TSLA,SPY,MSFT,AMD,GOOG,META,N
 if not BOT_TOKEN or not CHAT_IDS or not FINNHUB_API_KEY:
     raise ValueError("Missing one or more required environment variables.")
 
+# === Globals ===
 ticker_list = LIQUID_TICKERS.copy()
 ticker_list_lock = threading.Lock()
 sent_hashes = deque(maxlen=1000)
@@ -59,6 +64,7 @@ news_sources = [
     {"type": "finnhub", "url": "https://finnhub.io/api/v1/news", "name": "Finnhub"}
 ]
 
+# === Sentiment ===
 def analyze_sentiment(text: str) -> float:
     positive_words = {'growth', 'profit', 'rise', 'up', 'gain', 'strong', 'bullish'}
     negative_words = {'loss', 'decline', 'down', 'drop', 'weak', 'bearish', 'fall'}
@@ -76,20 +82,45 @@ def send_telegram_alert(message, chat_ids=CHAT_IDS):
     for chat_id in chat_ids:
         try:
             url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-            data = {
-                "chat_id": chat_id.strip(),
-                "text": message[:4096],
-                "parse_mode": "Markdown"
-            }
-            logger.info(f"📤 Sending to {chat_id}: {message[:80]}...")
+            data = {"chat_id": chat_id.strip(), "text": message[:4096], "parse_mode": "Markdown"}
             response = requests.post(url, data=data)
-            logger.info(f"✅ Telegram API response: {response.status_code} - {response.text}")
             response.raise_for_status()
-            time.sleep(1)
+            logger.info(f"Alert sent to chat ID {chat_id.strip()}: {message}")
         except Exception as e:
-            logger.error(f"❌ Failed to send to {chat_id}: {e}")
-            raise
+            logger.error(f"Failed to send alert to {chat_id.strip()}: {e}")
 
+# === Option Data Fetch ===
+def get_option_data(ticker: str) -> Tuple[Optional[float], Optional[float]]:
+    with option_cache_lock:
+        if ticker in option_cache and option_cache_timestamps[ticker] > datetime.now() - timedelta(minutes=15):
+            return option_cache[ticker]
+    try:
+        quote_response = requests.get(f"https://finnhub.io/api/v1/quote?symbol={ticker}&token={FINNHUB_API_KEY}")
+        quote_response.raise_for_status()
+        current_price = quote_response.json().get('c', 0)
+        if not current_price:
+            return None, None
+        option_response = requests.get(f"https://finnhub.io/api/v1/stock/option-chain?symbol={ticker}&token={FINNHUB_API_KEY}")
+        option_response.raise_for_status()
+        option_data = option_response.json()
+        atm_strike, option_price, min_diff = None, None, float('inf')
+        for contract in option_data.get('data', []):
+            for option in contract.get('options', {}).get('CALL', []):
+                strike = option['strike']
+                diff = abs(strike - current_price)
+                if diff < min_diff:
+                    atm_strike = strike
+                    option_price = option.get('lastPrice', 0) or option.get('ask', 0)
+                    min_diff = diff
+        with option_cache_lock:
+            option_cache[ticker] = (atm_strike, option_price)
+            option_cache_timestamps[ticker] = datetime.now()
+        return atm_strike, option_price
+    except Exception as e:
+        logger.error(f"Option fetch failed for {ticker}: {e}")
+        return None, None
+
+# === Alert ===
 def send_trade_alert(ticker: str, headline: str, sentiment: float, source: str):
     direction = "Bullish" if sentiment > 0 else "Bearish"
     strike, price = get_option_data(ticker)
@@ -114,6 +145,7 @@ def send_trade_alert(ticker: str, headline: str, sentiment: float, source: str):
 """
     send_telegram_alert(message)
 
+# === Mock Alert ===
 @app.route('/test/mock_alert')
 def trigger_mock_alert():
     ticker = "AAPL"
@@ -123,14 +155,13 @@ def trigger_mock_alert():
     send_trade_alert(ticker, headline, sentiment, source)
     return {"status": "Mock alert sent", "ticker": ticker, "headline": headline}
 
-# other functions (verify_symbol, get_option_data, fetch_and_analyze_news, etc.) remain unchanged
-
-if __name__ == "__main__":
+# === Main Runner ===
+def main():
     scheduler = BackgroundScheduler()
-    scheduler.add_job(fetch_and_analyze_news, 'interval', minutes=SCAN_INTERVAL_MINUTES)
-    scheduler.add_job(send_daily_summary, 'cron', hour=9, minute=0)
     scheduler.start()
-    fetch_and_analyze_news()
-    logger.info("Forced initial scan")
+    logger.info("Starting scheduler")
     from waitress import serve
     serve(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
+if __name__ == "__main__":
+    main()
