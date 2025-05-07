@@ -22,6 +22,17 @@
             border-radius: 4px;
             overflow-x: auto;
         }
+        button {
+            background: #20232a;
+            color: #fff;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #444;
+        }
         footer {
             text-align: center;
             font-size: 0.9rem;
@@ -43,17 +54,7 @@
 
         <div class="card">
             <h2>Recent Alerts</h2>
-            {% if alerts %}
-                {% for alert in alerts[-5:] %}
-                    <div>
-                        <strong>{{ alert.timestamp }}</strong><br>
-                        <code>{{ alert.ticker }} — {{ alert.headline }}</code>
-                    </div>
-                    <hr>
-                {% endfor %}
-            {% else %}
-                <p>No alerts found.</p>
-            {% endif %}
+            <div id="alerts">Loading...</div>
         </div>
 
         <div class="card">
@@ -66,9 +67,55 @@
             </pre>
         </div>
 
+        <div class="card">
+            <h2>Manual Trigger</h2>
+            <button onclick="triggerScan()">Run News Scan Now</button>
+            <p id="scan-status"></p>
+        </div>
+
     </div>
     <footer>
-        Built with ❤️ using Flask, Polygon, Marketaux, and Telegram
+        Built with ❤️ using Flask, Marketaux, Polygon.io, and Telegram
     </footer>
+
+    <script>
+        async function loadAlerts() {
+            try {
+                const res = await fetch("/alerts");
+                const data = await res.json();
+                const container = document.getElementById("alerts");
+
+                if (!data.length) {
+                    container.innerHTML = "<p>No alerts found.</p>";
+                    return;
+                }
+
+                container.innerHTML = data.slice(-5).reverse().map(a => `
+                    <div>
+                        <strong>${a.timestamp}</strong><br/>
+                        <code>${a.ticker} – ${a.headline}</code><br/>
+                        Sentiment: ${a.sentiment}
+                    </div><hr>
+                `).join("");
+            } catch {
+                document.getElementById("alerts").innerText = "Failed to load alerts.";
+            }
+        }
+
+        async function triggerScan() {
+            const status = document.getElementById("scan-status");
+            status.innerText = "Running scan...";
+            try {
+                const res = await fetch("/trigger_scan");
+                const data = await res.json();
+                status.innerText = data.result;
+                loadAlerts();
+            } catch {
+                status.innerText = "Scan failed.";
+            }
+        }
+
+        loadAlerts();
+    </script>
 </body>
 </html>
