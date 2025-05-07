@@ -12,8 +12,14 @@ from typing import Dict, Tuple, Optional, List
 from flask import Flask
 from apscheduler.schedulers.background import BackgroundScheduler
 from tenacity import retry, stop_after_attempt, wait_exponential
-from bs4 import BeautifulSoup
-from transformers import pipeline
+
+# Try importing BeautifulSoup, but make it optional
+try:
+    from bs4 import BeautifulSoup
+    BS4_AVAILABLE = True
+except ImportError:
+    BS4_AVAILABLE = False
+    logging.warning("BeautifulSoup (bs4) not available. Article scraping will be disabled.")
 
 # === Logging Setup ===
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -25,6 +31,10 @@ app = Flask(__name__)
 @app.route('/')
 def home():
     return "✅ RealTimeTradeBot is running!"
+
+@app.route('/health')
+def health():
+    return {"status": "healthy", "timestamp": time.strftime('%Y-%m-%d %H:%M:%S')}
 
 # === Environment Variables ===
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
@@ -72,16 +82,21 @@ news_sources = [
     {"type": "finnhub", "url": "https://finnhub.io/api/v1/news", "name": "Finnhub"}
 ]
 
-# === Sentiment Analysis (Lazy Loading) ===
-sentiment_analyzer = None
-def init_sentiment_analyzer():
-    global sentiment_analyzer
-    if sentiment_analyzer is None:
-        try:
-            sentiment_analyzer = pipeline("sentiment-analysis", model="distilbert-base-uncased-finetuned-sst-2-english")
-        except Exception as e:
-            logger.error(f"Failed to load sentiment model: {e}")
-            raise RuntimeError(f"Failed to load sentiment model: {e}")
+# === Rule-Based Sentiment Analysis ===
+def analyze_sentiment(text: str) -> float:
+    """Simple rule-based sentiment analysis using keywords."""
+    positive_words = {'growth', 'profit', 'rise', 'up', 'gain', 'strong', 'bullish'}
+    negative_words = {'loss', 'decline', 'down', 'drop', 'weak', 'bearish', 'fall'}
+    
+    text = text.lower()
+    pos_count = sum(text.count(word) for word in positive_words)
+    neg_count = sum(text.count(word) for word in negative_words)
+    
+    if pos_count > neg_count:
+        return 0.5  # Positive
+    elif neg_count > pos_count:
+        return -0.5  # Negative
+    return 0.0  # Neutral
 
 # === Telegram Alert Function ===
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
@@ -106,7 +121,7 @@ def verify_symbol(symbol: str) -> bool:
         response = requests.get(quote_url)
         response.raise_for_status()
         data = response.json()
-        return 'c' in data and data['c'] != 0  # Check if current price exists
+        return 'c' in data and data['c'] != 0
     except Exception as e:
         logger.error(f"Error verifying symbol {symbol}: {e}")
         return False
@@ -118,7 +133,7 @@ def add_ticker(symbol: str) -> str:
             return f"{symbol} already exists in the list."
         if verify_symbol(symbol):
             ticker_list.append(symbol)
-            daily_sentiment_scores[symbol] = []  # Initialize sentiment tracking
+            daily_sentiment_scores[symbol] = []
             return f"Added {symbol} to the list."
         return f"{symbol} is not a valid symbol."
 
@@ -145,6 +160,9 @@ def match_ticker(text: str) -> List[str]:
 
 # === Fetch Full Article Content ===
 def get_full_article(url: str) -> str:
+    if not BS4_AVAILABLE:
+        logger.warning(f"Cannot fetch article content from {url}: bs4 not available")
+        return ""
     try:
         response = requests.get(url, timeout=5)
         response.raise_for_status()
@@ -236,7 +254,6 @@ def send_daily_summary():
 # === Fetch and Analyze News ===
 def fetch_and_analyze_news():
     try:
-        init_sentiment_analyzer()
         for source in news_sources:
             logger.info(f"Scanning {source['name']}...")
             articles = []
@@ -281,8 +298,7 @@ def fetch_and_analyze_news():
                     sent_hashes.append(news_hash)
                     sent_hashes_timestamps[news_hash] = datetime.now()
 
-                result = sentiment_analyzer(content[:512])
-                sentiment = 0.5 if result[0]['label'] == 'POSITIVE' else -0.5 if result[0]['label'] == 'NEGATIVE' else 0
+                sentiment = analyze_sentiment(content)
                 if abs(sentiment) >= SENTIMENT_THRESHOLD:
                     tickers = match_ticker(content)
                     if tickers:
@@ -294,7 +310,7 @@ def fetch_and_analyze_news():
     except Exception as e:
         logger.error(f"Error in fetch_and_analyze_news: {e}")
 
-# === Telegram Command Handler (Simple Implementation) ===
+# === Telegram Command Handler ===
 @app.route('/telegram/<command>')
 def handle_telegram_command(command):
     if command == 'list_tickers':
@@ -310,23 +326,20 @@ def handle_telegram_command(command):
     send_telegram_alert(message)
     return {"status": "command processed", "message": message}
 
-# === Keep Flask Server Alive ===
-def run_server():
-    from waitress import serve
-    serve(app, host='0.0.0.0', port=int(os.environ.get("PORT", 8080)))
-
-def keep_alive():
-    thread = threading.Thread(target=run_server, daemon=True)
-    thread.start()
-
 # === Main Runner ===
 def main():
-    keep_alive()
+    # Start the scheduler in a separate thread
     scheduler = BackgroundScheduler()
     scheduler.add_job(fetch_and_analyze_news, 'interval', minutes=SCAN_INTERVAL_MINUTES)
     scheduler.add_job(send_daily_summary, 'cron', hour=9, minute=0)  # Daily summary at 9 AM UTC
     scheduler.start()
-    logger.info("RealTimeTradeBot started")
+    logger.info("RealTimeTradeBot scheduler started")
+
+    # Start the server in the main thread
+    from waitress import serve
+    port = int(os.environ.get("PORT", 8080))
+    logger.info(f"Starting server on port {port}...")
+    serve(app, host='0.0.0.0', port=port, threads=2, backlog=128, channel_timeout=60, cleanup_interval=15)
 
 if __name__ == "__main__":
     main()
