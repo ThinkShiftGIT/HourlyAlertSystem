@@ -8,6 +8,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime
 from collections import deque
 from typing import Optional, Tuple
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 # === Logging ===
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -21,35 +22,18 @@ TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_IDS = os.getenv("TELEGRAM_CHAT_IDS", "1654552128").split(",")
 POLYGON_API_KEY = os.getenv("POLYGON_API_KEY")
 MARKETAUX_API_KEY = os.getenv("MARKETAUX_API_KEY")
-
 SCAN_INTERVAL_MINUTES = int(os.getenv("SCAN_INTERVAL_MINUTES", 15))
+SENTIMENT_THRESHOLD = float(os.getenv("SENTIMENT_THRESHOLD", 0.6))
 
-# === Tracked Tickers with Company Names ===
+# === Tickers to Monitor ===
 TICKERS = [
-    "NVDA",  # NVIDIA Corporation
-    "TSLA",  # Tesla, Inc.
-    "AAPL",  # Apple Inc.
-    "AMZN",  # Amazon.com, Inc.
-    "PLTR",  # Palantir Technologies Inc.
-    "AMD",   # Advanced Micro Devices, Inc.
-    "SMCI",  # Super Micro Computer, Inc.
-    "HIMS",  # Hims & Hers Health, Inc.
-    "F",     # Ford Motor Company
-    "LCID",  # Lucid Group, Inc.
-    "UPST",  # Upstart Holdings, Inc.
-    "RIVN",  # Rivian Automotive, Inc.
-    "MSFT",  # Microsoft Corporation
-    "BAC",   # Bank of America Corporation
-    "SOFI",  # SoFi Technologies, Inc.
-    "NU",    # Nu Holdings Ltd.
-    "HOOD",  # Robinhood Markets, Inc.
-    "MARA",  # Marathon Digital Holdings, Inc.
-    "PLUG",  # Plug Power Inc.
-    "QBTS"   # D-Wave Quantum Inc.
+    "NVDA", "TSLA", "AAPL", "AMZN", "PLTR", "AMD", "SMCI", "HIMS", "F", "LCID",
+    "UPST", "RIVN", "MSFT", "BAC", "SOFI", "NU", "HOOD", "MARA", "PLUG", "QBTS"
 ]
 
 # === Alert Cache ===
 sent_hashes = deque(maxlen=100)
+analyzer = SentimentIntensityAnalyzer()
 
 # === Telegram Alerts ===
 def send_telegram_alert(message: str):
@@ -119,7 +103,11 @@ def scan_and_alert():
 
         for ticker in TICKERS:
             if ticker in content:
-                logger.info(f"📌 Match: {ticker} in article.")
+                sentiment = analyzer.polarity_scores(content)
+                compound = sentiment['compound']
+                if abs(compound) < SENTIMENT_THRESHOLD:
+                    continue
+
                 strike, option_price = get_option_data_polygon(ticker)
                 last_price = get_price_polygon(ticker)
 
@@ -130,7 +118,7 @@ def scan_and_alert():
                 alert = {
                     "ticker": ticker,
                     "headline": article.get('title'),
-                    "sentiment": "n/a",
+                    "sentiment": round(compound, 3),
                     "timestamp": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
                 }
 
@@ -152,6 +140,7 @@ def scan_and_alert():
 *Market Price:* ${last_price:.2f}
 *Option Strike:* ${strike:.2f}
 *Ask Price:* ${option_price:.2f}
+*Sentiment Score:* {compound:+.2f}
 *Source:* Marketaux
                 """
                 send_telegram_alert(msg)
@@ -170,6 +159,20 @@ def health():
 def test_alert():
     send_telegram_alert("🧪 This is a test alert from RealTimeTradeBot.")
     return {"result": "Sent"}
+
+@app.route("/alerts")
+def get_alerts():
+    try:
+        with open("alerts.json", "r") as f:
+            alerts = json.load(f)
+        return jsonify(alerts)
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
+@app.route("/trigger_scan")
+def trigger_scan():
+    scan_and_alert()
+    return jsonify({"result": "Scan triggered manually."})
 
 @app.route("/dashboard")
 def dashboard():
