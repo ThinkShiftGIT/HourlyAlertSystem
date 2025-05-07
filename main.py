@@ -13,7 +13,6 @@ from flask import Flask
 from apscheduler.schedulers.background import BackgroundScheduler
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-# Optional: BeautifulSoup for full article scraping
 try:
     from bs4 import BeautifulSoup
     BS4_AVAILABLE = True
@@ -21,11 +20,9 @@ except ImportError:
     BS4_AVAILABLE = False
     logging.warning("BeautifulSoup (bs4) not available. Article scraping will be disabled.")
 
-# === Logging ===
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# === Flask Setup ===
 app = Flask(__name__)
 
 @app.route('/')
@@ -36,7 +33,6 @@ def home():
 def health():
     return {"status": "healthy", "timestamp": time.strftime('%Y-%m-%d %H:%M:%S')}
 
-# === Environment Variables ===
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 CHAT_IDS = os.getenv("TELEGRAM_CHAT_IDS", "1654552128").split(",")
 FINNHUB_API_KEY = os.getenv("FINNHUB_API_KEY")
@@ -47,7 +43,8 @@ LIQUID_TICKERS = os.getenv("LIQUID_TICKERS", 'AAPL,TSLA,SPY,MSFT,AMD,GOOG,META,N
 if not BOT_TOKEN or not CHAT_IDS or not FINNHUB_API_KEY:
     raise ValueError("Missing one or more required environment variables.")
 
-# === Globals ===
+logger.info(f"🚀 CHAT_IDS resolved at startup: {CHAT_IDS}")
+
 ticker_list = LIQUID_TICKERS.copy()
 ticker_list_lock = threading.Lock()
 sent_hashes = deque(maxlen=1000)
@@ -64,7 +61,6 @@ news_sources = [
     {"type": "finnhub", "url": "https://finnhub.io/api/v1/news", "name": "Finnhub"}
 ]
 
-# === Sentiment ===
 def analyze_sentiment(text: str) -> float:
     positive_words = {'growth', 'profit', 'rise', 'up', 'gain', 'strong', 'bullish'}
     negative_words = {'loss', 'decline', 'down', 'drop', 'weak', 'bearish', 'fall'}
@@ -79,19 +75,22 @@ def analyze_sentiment(text: str) -> float:
 
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
 def send_telegram_alert(message, chat_ids=CHAT_IDS):
+    if not chat_ids or chat_ids == ['']:
+        logger.warning("No valid TELEGRAM_CHAT_IDS found. Skipping alert.")
+        return
     for chat_id in chat_ids:
         try:
             url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
             data = {"chat_id": chat_id.strip(), "text": message[:4096], "parse_mode": "Markdown"}
+            logger.info(f"Sending message to Telegram ID {chat_id.strip()}")
             response = requests.post(url, data=data)
             response.raise_for_status()
-            logger.info(f"Alert sent to chat ID {chat_id.strip()}")
+            logger.info(f"✅ Alert sent to chat ID {chat_id.strip()}")
             time.sleep(1)
         except Exception as e:
-            logger.error(f"Failed to send alert to {chat_id.strip()}: {e}")
+            logger.error(f"❌ Failed to send to {chat_id.strip()}: {e}")
             raise
 
-# === Ticker Management ===
 def verify_symbol(symbol: str) -> bool:
     try:
         url = f"https://finnhub.io/api/v1/quote?symbol={symbol}&token={FINNHUB_API_KEY}"
@@ -125,7 +124,7 @@ def list_tickers() -> str:
 
 def match_ticker(text: str) -> List[str]:
     with ticker_list_lock:
-        return [t for t in ticker_list if re.search(r'\b' + re.escape(t) + r'\b', text.upper())]
+        return [t for t in ticker_list if re.search(r'\\b' + re.escape(t) + r'\\b', text.upper())]
 
 def get_full_article(url: str) -> str:
     if not BS4_AVAILABLE:
@@ -173,7 +172,7 @@ def send_trade_alert(ticker: str, headline: str, sentiment: float, source: str):
 🕒 {time.strftime('%Y-%m-%d %H:%M')} (UTC-5)
 📰 {headline}
 🔄 {direction}
-📡 {source}
+📱 {source}
 
 🎯 *Trade Setup*
 • Ticker: {ticker}
@@ -241,7 +240,6 @@ def handle_command(command):
     send_telegram_alert(msg)
     return {"result": msg}
 
-# === 🧪 Mock Alert Route ===
 @app.route('/test/mock_alert')
 def trigger_mock_alert():
     ticker = "AAPL"
