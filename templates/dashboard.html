@@ -1,0 +1,32 @@
+<!-- File: templates/dashboard.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>📈 Real-Time Trading Alerts Dashboard</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f4f4; padding: 20px; }
+    h1 { color: #333; }
+    table { width: 100%; border-collapse: collapse; background: white; }
+    th, td { padding: 12px; border-bottom: 1px solid #ddd; }
+    th { background-color: #eee; }
+  </style>
+</head>
+<body>
+  <h1>🚨 Live Trade Alerts</h1>
+  <table>
+    <tr>
+      <th>Ticker</th>
+      <th>Headline</th>
+      <th>Time</th>
+    </tr>
+    {% for alert in alerts %}
+    <tr>
+      <td>{{ alert.ticker }}</td>
+      <td>{{ alert.headline }}</td>
+      <td>{{ alert.time }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</body>
+</html>
