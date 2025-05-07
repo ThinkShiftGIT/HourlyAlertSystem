@@ -18,7 +18,7 @@ app = Flask(__name__)
 
 # === Environment ===
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+TELEGRAM_CHAT_IDS = os.getenv("TELEGRAM_CHAT_IDS", "1654552128").split(",")
 POLYGON_API_KEY = os.getenv("POLYGON_API_KEY")
 MARKETAUX_API_KEY = os.getenv("MARKETAUX_API_KEY")
 
@@ -30,14 +30,15 @@ sent_hashes = deque(maxlen=100)
 
 # === Telegram Alert ===
 def send_telegram_alert(message: str):
-    if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
+    if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_IDS:
         logger.warning("Telegram not configured properly.")
         return
     try:
         url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-        data = {"chat_id": TELEGRAM_CHAT_ID, "text": message[:4096], "parse_mode": "Markdown"}
-        r = requests.post(url, data=data)
-        r.raise_for_status()
+        for chat_id in TELEGRAM_CHAT_IDS:
+            data = {"chat_id": chat_id.strip(), "text": message[:4096], "parse_mode": "Markdown"}
+            r = requests.post(url, data=data)
+            r.raise_for_status()
         logger.info("✅ Sent alert to Telegram.")
     except Exception as e:
         logger.error(f"❌ Telegram alert failed: {e}")
