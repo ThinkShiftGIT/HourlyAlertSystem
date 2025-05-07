@@ -59,42 +59,18 @@ option_cache_lock = threading.Lock()
 daily_sentiment_scores: Dict[str, List[float]] = {ticker: [] for ticker in ticker_list}
 sentiment_scores_lock = threading.Lock()
 
-news_sources = [
-    {"type": "rss", "url": "https://finance.yahoo.com/news/rssindex", "name": "Yahoo Finance"},
-    {"type": "finnhub", "url": "https://finnhub.io/api/v1/news", "name": "Finnhub"}
-]
-
-# === Sentiment ===
-def analyze_sentiment(text: str) -> float:
-    positive_words = {'growth', 'profit', 'rise', 'up', 'gain', 'strong', 'bullish'}
-    negative_words = {'loss', 'decline', 'down', 'drop', 'weak', 'bearish', 'fall'}
-    text = text.lower()
-    pos_count = sum(text.count(word) for word in positive_words)
-    neg_count = sum(text.count(word) for word in negative_words)
-    if pos_count > neg_count:
-        return 0.5
-    elif neg_count > pos_count:
-        return -0.5
-    return 0.0
-
+# === Telegram Alert ===
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
 def send_telegram_alert(message, chat_ids=CHAT_IDS):
     for chat_id in chat_ids:
         try:
             url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-            data = {
-                "chat_id": chat_id.strip(),
-                "text": message[:4096],
-                "parse_mode": "Markdown"
-            }
-            logger.info(f"📤 Sending alert to Telegram chat ID {chat_id.strip()}")
+            data = {"chat_id": chat_id.strip(), "text": message[:4096], "parse_mode": "Markdown"}
             response = requests.post(url, data=data)
-            logger.info(f"📨 Telegram response: {response.status_code} - {response.text}")
             response.raise_for_status()
-            logger.info(f"✅ Alert sent successfully to {chat_id.strip()}")
+            logger.info(f"Alert sent to chat ID {chat_id.strip()}: {message}")
         except Exception as e:
-            logger.error(f"❌ Telegram alert failed for {chat_id.strip()}: {e}")
-            raise
+            logger.error(f"Failed to send alert to {chat_id.strip()}: {e}")
 
 # === Option Data Fetch ===
 def get_option_data(ticker: str) -> Tuple[Optional[float], Optional[float]]:
@@ -132,13 +108,14 @@ def send_trade_alert(ticker: str, headline: str, sentiment: float, source: str):
     direction = "Bullish" if sentiment > 0 else "Bearish"
     strike, price = get_option_data(ticker)
     if strike is None or price is None:
+        logger.warning(f"Missing option data for {ticker}. Skipping alert.")
         return
     message = f"""
 🚨 *Market News Alert*
 🕒 {time.strftime('%Y-%m-%d %H:%M')} (UTC-5)
 📰 {headline}
 🔄 {direction}
-📡 {source}
+📱 {source}
 
 🎯 *Trade Setup*
 • Ticker: {ticker}
