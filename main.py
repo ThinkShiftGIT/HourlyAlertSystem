@@ -1,4 +1,4 @@
-import os
+import os 
 import time
 import json
 import logging
@@ -23,7 +23,30 @@ POLYGON_API_KEY = os.getenv("POLYGON_API_KEY")
 MARKETAUX_API_KEY = os.getenv("MARKETAUX_API_KEY")
 
 SCAN_INTERVAL_MINUTES = int(os.getenv("SCAN_INTERVAL_MINUTES", 15))
-TICKERS = os.getenv("TICKERS", "AAPL,MSFT,TSLA,GOOG,NVDA,AMZN").split(",")
+
+# === Tracked Tickers with Company Names ===
+TICKERS = [
+    "NVDA",  # NVIDIA Corporation
+    "TSLA",  # Tesla, Inc.
+    "AAPL",  # Apple Inc.
+    "AMZN",  # Amazon.com, Inc.
+    "PLTR",  # Palantir Technologies Inc.
+    "AMD",   # Advanced Micro Devices, Inc.
+    "SMCI",  # Super Micro Computer, Inc.
+    "HIMS",  # Hims & Hers Health, Inc.
+    "F",     # Ford Motor Company
+    "LCID",  # Lucid Group, Inc.
+    "UPST",  # Upstart Holdings, Inc.
+    "RIVN",  # Rivian Automotive, Inc.
+    "MSFT",  # Microsoft Corporation
+    "BAC",   # Bank of America Corporation
+    "SOFI",  # SoFi Technologies, Inc.
+    "NU",    # Nu Holdings Ltd.
+    "HOOD",  # Robinhood Markets, Inc.
+    "MARA",  # Marathon Digital Holdings, Inc.
+    "PLUG",  # Plug Power Inc.
+    "QBTS"   # D-Wave Quantum Inc.
+]
 
 # === Alert Cache ===
 sent_hashes = deque(maxlen=100)
