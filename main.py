@@ -1,183 +1,197 @@
 import os
 import time
+import json
+import logging
 import requests
-import threading
 import feedparser
 import hashlib
-import logging
-import re
-from collections import deque
+import threading
 from datetime import datetime, timedelta
-from typing import Dict, Tuple, Optional, List
-from flask import Flask, render_template, jsonify
+from collections import deque
+from typing import List, Tuple, Dict, Optional
+from flask import Flask, send_from_directory
 from apscheduler.schedulers.background import BackgroundScheduler
 from tenacity import retry, stop_after_attempt, wait_exponential
-from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-from dotenv import load_dotenv
 import yfinance as yf
 
-# Load environment variables
-load_dotenv()
-
-# === Logging Setup ===
+# === Setup ===
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# === Flask Setup ===
 app = Flask(__name__)
-
-@app.route('/')
-def home():
-    return "✅ RealTimeTradeBot is running! Navigate to /dashboard for UI."
-
-@app.route('/dashboard')
-def dashboard():
-    return render_template("dashboard.html")
-
-@app.route('/health')
-def health():
-    return {"status": "healthy", "timestamp": time.strftime('%Y-%m-%d %H:%M:%S')}
+alerts_file = "alerts.json"
 
 # === Environment Variables ===
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 CHAT_IDS = os.getenv("TELEGRAM_CHAT_IDS", "1654552128").split(",")
 MARKETAUX_API_KEY = os.getenv("MARKETAUX_API_KEY")
+POLYGON_API_KEY = os.getenv("POLYGON_API_KEY")
 SENTIMENT_THRESHOLD = float(os.getenv("SENTIMENT_THRESHOLD", 0.5))
-SCAN_INTERVAL_MINUTES = int(os.getenv("SCAN_INTERVAL_MINUTES", 10))
-LIQUID_TICKERS = os.getenv("LIQUID_TICKERS", 'AAPL,TSLA,SPY,MSFT,AMD,GOOG,NVDA,META,AMZN').split(',')
+SCAN_INTERVAL_MINUTES = int(os.getenv("SCAN_INTERVAL_MINUTES", 5))
+LIQUID_TICKERS = os.getenv("LIQUID_TICKERS", "AAPL,MSFT,NVDA,AMZN,GOOG,TSLA,META,JPM,INTC,AMD").split(",")
 
 # === Globals ===
 ticker_list = LIQUID_TICKERS.copy()
-ticker_list_lock = threading.Lock()
 sent_hashes = deque(maxlen=1000)
-sent_hashes_timestamps = {}
 sent_hashes_lock = threading.Lock()
-option_cache: Dict[str, Tuple[Optional[float], Optional[float]]] = {}
-option_cache_timestamps: Dict[str, datetime] = {}
-option_cache_lock = threading.Lock()
-daily_sentiment_scores: Dict[str, List[float]] = {ticker: [] for ticker in ticker_list}
-sentiment_scores_lock = threading.Lock()
 
-analyzer = SentimentIntensityAnalyzer()
+@app.route('/')
+def home():
+    return "✅ RealTimeTradeBot is running!"
 
-news_sources = [
-    {"type": "rss", "url": "https://finance.yahoo.com/news/rssindex", "name": "Yahoo Finance"},
-    {"type": "marketaux", "url": "https://api.marketaux.com/v1/news/all", "name": "Marketaux"}
-]
+@app.route('/health')
+def health():
+    return {"status": "healthy", "timestamp": time.strftime('%Y-%m-%d %H:%M:%S')}
+
+@app.route('/dashboard')
+def dashboard():
+    return send_from_directory("static", "dashboard.html")
 
 # === Utilities ===
-
 def analyze_sentiment(text: str) -> float:
-    return analyzer.polarity_scores(text)['compound']
+    pos_words = ['gain', 'strong', 'surge', 'up', 'beat', 'rise', 'bull']
+    neg_words = ['fall', 'drop', 'miss', 'down', 'loss', 'weak', 'bear']
+    text = text.lower()
+    pos_score = sum(text.count(w) for w in pos_words)
+    neg_score = sum(text.count(w) for w in neg_words)
+    return 0.6 if pos_score > neg_score else -0.6 if neg_score > pos_score else 0.0
 
-@retry(stop=stop_after_attempt(3), wait=wait_exponential(min=3, max=10))
-def send_telegram_alert(message, chat_ids=CHAT_IDS):
-    for chat_id in chat_ids:
+@retry(stop=stop_after_attempt(3), wait=wait_exponential(min=2, max=6))
+def send_telegram_alert(message: str):
+    for chat_id in CHAT_IDS:
         try:
             url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
             data = {"chat_id": chat_id.strip(), "text": message[:4096], "parse_mode": "Markdown"}
-            response = requests.post(url, data=data)
-            response.raise_for_status()
-            logger.info(f"✅ Sent alert to {chat_id.strip()}")
+            r = requests.post(url, data=data)
+            r.raise_for_status()
+            logger.info(f"✅ Sent alert to {chat_id}")
         except Exception as e:
-            logger.error(f"❌ Failed to send alert to {chat_id.strip()}: {e}")
+            logger.error(f"❌ Telegram send failed: {e}")
 
+def log_alert(alert: Dict):
+    try:
+        if os.path.exists(alerts_file):
+            with open(alerts_file, 'r') as f:
+                data = json.load(f)
+        else:
+            data = []
+        data.insert(0, alert)
+        with open(alerts_file, 'w') as f:
+            json.dump(data[:50], f, indent=2)
+    except Exception as e:
+        logger.warning(f"Failed to log alert: {e}")
+
+def get_price_yfinance(ticker: str) -> Optional[float]:
+    try:
+        data = yf.Ticker(ticker).history(period='1d')
+        return data['Close'].iloc[-1]
+    except Exception as e:
+        logger.error(f"{ticker}: Failed to get Yahoo price - {e}")
+        return None
 
 def get_option_data(ticker: str) -> Tuple[Optional[float], Optional[float]]:
     try:
         stock = yf.Ticker(ticker)
-        price = stock.history(period="1d").iloc[-1].Close
-        options = stock.option_chain().calls
+        price = get_price_yfinance(ticker)
+        if not price:
+            return None, None
+        options = stock.option_chain(stock.options[0]).calls
         options['diff'] = abs(options['strike'] - price)
-        row = options.sort_values('diff').iloc[0]
-        return row['strike'], row['lastPrice']
+        best = options.sort_values('diff').iloc[0]
+        return best['strike'], best['lastPrice']
     except Exception as e:
         logger.error(f"Option fetch failed for {ticker}: {e}")
         return None, None
 
-
 def match_ticker(text: str) -> List[str]:
-    with ticker_list_lock:
-        return [t for t in ticker_list if re.search(r'\\b' + re.escape(t) + r'\\b', text.upper())]
+    return [t for t in ticker_list if t in text.upper()]
 
+def fetch_marketaux_news():
+    try:
+        url = f"https://api.marketaux.com/v1/news/all?language=en&filter_entities=true&api_token={MARKETAUX_API_KEY}"
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        return response.json().get("data", [])[:25]
+    except Exception as e:
+        logger.error(f"Marketaux fetch failed: {e}")
+        return []
 
-def send_trade_alert(ticker: str, headline: str, sentiment: float, source: str):
-    direction = "Bullish" if sentiment > 0 else "Bearish"
-    strike, price = get_option_data(ticker)
-    if strike is None or price is None:
-        logger.warning(f"Missing option data for {ticker}. Skipping alert.")
-        return
-    message = f"""
+def process_news():
+    logger.info("📡 Scanning Marketaux...")
+    news_items = fetch_marketaux_news()
+    alerts_sent = 0
+
+    for article in news_items:
+        title = article.get("title", "")
+        summary = article.get("description", "")
+        content = f"{title} {summary}"
+
+        h = hashlib.sha256(content.encode()).hexdigest()
+        with sent_hashes_lock:
+            if h in sent_hashes:
+                continue
+            sent_hashes.append(h)
+
+        sentiment = analyze_sentiment(content)
+        if abs(sentiment) < SENTIMENT_THRESHOLD:
+            continue
+
+        matched = match_ticker(content)
+        for ticker in matched:
+            strike, price = get_option_data(ticker)
+            if not strike or not price:
+                logger.warning(f"Missing option data for {ticker}. Skipping alert.")
+                continue
+
+            direction = "Bullish" if sentiment > 0 else "Bearish"
+            msg = f"""
 🚨 *Market News Alert*
 🕒 {time.strftime('%Y-%m-%d %H:%M')} (UTC-5)
-📰 {headline}
+📰 {title}
 🔄 {direction}
-📡 {source}
+📡 Marketaux
 
 🎯 *Trade Setup*
 • Ticker: {ticker}
 • Strategy: Long {'Call' if direction == 'Bullish' else 'Put'}
 • Strike: {strike}
 • Expiration: 2 weeks
-• Est. Contract Price: ${price:.2f}
+• Est. Price: ${price:.2f}
 • Reason: Sentiment score {sentiment:.2f}
-• Entry: ASAP
-• Exit: 50% profit or 3 days before expiration
 """
-    send_telegram_alert(message)
+            send_telegram_alert(msg)
+            log_alert({"ticker": ticker, "headline": title, "time": datetime.now().isoformat()})
+            alerts_sent += 1
+            if alerts_sent >= 2:
+                return  # limit alerts per scan
 
+# === Routes ===
+@app.route("/test/mock_alert")
+def mock_alert():
+    ticker = "AAPL"
+    title = "Apple unveils new AI-powered chip"
+    sentiment = 0.7
+    strike, price = get_option_data(ticker)
+    if not strike or not price:
+        return {"status": "Failed", "reason": "Option data missing"}
 
-def fetch_and_analyze_news():
-    try:
-        for source in news_sources:
-            logger.info(f"Scanning {source['name']}...")
-            articles = []
-            if source['type'] == 'rss':
-                for entry in feedparser.parse(source['url']).entries:
-                    articles.append({"title": entry.title, "content": entry.summary, "source": source['name']})
-            elif source['type'] == 'marketaux':
-                params = {"api_token": MARKETAUX_API_KEY, "language": "en", "limit": 50}
-                response = requests.get(source['url'], params=params)
-                data = response.json().get("data", [])
-                for item in data:
-                    articles.append({"title": item.get("title"), "content": item.get("description", ""), "source": source['name']})
+    msg = f"""
+🧪 *Mock Alert*
+📰 {title}
+🔄 Bullish
+🎯 *Trade*: Long Call on {ticker} @ {strike}, est. ${price:.2f}
+"""
+    send_telegram_alert(msg)
+    return {"status": "Mock alert sent", "ticker": ticker, "headline": title}
 
-            for article in articles:
-                content = article['content'] or ''
-                h = hashlib.sha256((article['title'] + content).encode()).hexdigest()
-                with sent_hashes_lock:
-                    if h in sent_hashes:
-                        continue
-                    sent_hashes.append(h)
-                    sent_hashes_timestamps[h] = datetime.now()
-
-                sentiment = analyze_sentiment(article['title'] + " " + content)
-                if abs(sentiment) >= SENTIMENT_THRESHOLD:
-                    tickers = match_ticker(article['title'] + " " + content)
-                    if tickers:
-                        send_trade_alert(tickers[0], article['title'], sentiment, article['source'])
-                        with sentiment_scores_lock:
-                            daily_sentiment_scores[tickers[0]].append(sentiment)
-
-    except Exception as e:
-        logger.error(f"Error during news scan: {e}")
-
-
-@app.route('/test/mock_alert')
-def trigger_mock_alert():
-    send_trade_alert("AAPL", "Apple announces breakthrough in AI technology", 0.65, "Mock")
-    return {"status": "Mock alert sent", "ticker": "AAPL"}
-
-
+# === Main Entry ===
 def main():
     scheduler = BackgroundScheduler()
-    scheduler.add_job(fetch_and_analyze_news, 'interval', minutes=SCAN_INTERVAL_MINUTES)
+    scheduler.add_job(process_news, 'interval', minutes=SCAN_INTERVAL_MINUTES)
     scheduler.start()
-    logger.info("Scheduler started. Initial news scan running...")
-    fetch_and_analyze_news()
+    logger.info("✅ Scheduler started.")
     from waitress import serve
     serve(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
-
 
 if __name__ == "__main__":
     main()
