@@ -35,49 +35,40 @@
         <h1>📊 RealTime TradeBot Dashboard</h1>
     </header>
     <div class="container">
+
         <div class="card">
             <h2>Tracked Tickers</h2>
-            <div id="tickers"></div>
+            <p>{{ tickers | join(", ") }}</p>
         </div>
 
         <div class="card">
             <h2>Recent Alerts</h2>
-            <div id="alerts"></div>
+            {% if alerts %}
+                {% for alert in alerts[-5:] %}
+                    <div>
+                        <strong>{{ alert.timestamp }}</strong><br>
+                        <code>{{ alert.ticker }} — {{ alert.headline }}</code>
+                    </div>
+                    <hr>
+                {% endfor %}
+            {% else %}
+                <p>No alerts found.</p>
+            {% endif %}
         </div>
 
         <div class="card">
             <h2>System Health</h2>
-            <pre id="health">Loading...</pre>
+            <pre>
+{
+  "status": "healthy",
+  "timestamp": "{{ time.strftime('%Y-%m-%d %H:%M:%S') }}"
+}
+            </pre>
         </div>
+
     </div>
-
     <footer>
-        Built with ❤️ using Flask and Telegram API
+        Built with ❤️ using Flask, Polygon, Marketaux, and Telegram
     </footer>
-
-    <script>
-        async function loadData() {
-            try {
-                const tickersRes = await fetch('/tickers');
-                const tickersData = await tickersRes.json();
-                document.getElementById('tickers').innerText = tickersData.result || 'No data';
-
-                const alertsRes = await fetch('/logs/alerts.json');
-                const alertsData = await alertsRes.json();
-                document.getElementById('alerts').innerHTML = alertsData.slice(-5).map(entry => {
-                    return `<div><strong>${entry.timestamp}</strong><br><code>${entry.message}</code></div>`;
-                }).join('<hr>');
-
-                const healthRes = await fetch('/health');
-                const healthData = await healthRes.json();
-                document.getElementById('health').innerText = JSON.stringify(healthData, null, 2);
-            } catch (e) {
-                document.getElementById('health').innerText = 'Error loading data';
-                console.error(e);
-            }
-        }
-
-        loadData();
-    </script>
 </body>
 </html>
