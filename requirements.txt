@@ -1,7 +1,8 @@
 Flask==3.1.0
-waitress==3.0.2
 APScheduler==3.11.0
 feedparser==6.0.11
-beautifulsoup4==4.13.4
 requests==2.32.3
+vaderSentiment==3.3.2
 tenacity==9.1.2
+waitress==3.0.2
+beautifulsoup4==4.13.4
