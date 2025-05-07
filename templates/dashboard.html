@@ -1,76 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Real-Time Trade Alert Dashboard</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Real-Time Trade Alerts Dashboard</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 2rem;
-      background: #f8f9fa;
-      color: #333;
-    }
-    h1 {
-      text-align: center;
-      color: #007bff;
-    }
-    .section {
-      margin-top: 2rem;
-      padding: 1rem;
-      background: white;
-      border-radius: 5px;
-      box-shadow: 0 0 5px rgba(0,0,0,0.1);
-    }
-    .section h2 {
-      border-bottom: 1px solid #ddd;
-      padding-bottom: 0.5rem;
-      margin-bottom: 1rem;
-    }
-    code {
-      background: #f1f1f1;
-      padding: 0.2rem 0.5rem;
-      border-radius: 3px;
-    }
+    body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 0; }
+    .container { max-width: 900px; margin: auto; padding: 20px; background: white; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    h1 { color: #333; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { padding: 12px; border-bottom: 1px solid #ddd; text-align: left; }
+    th { background: #333; color: white; }
+    .alert { padding: 10px; margin-top: 20px; background: #e7f3fe; border-left: 5px solid #2196F3; }
+    .footer { text-align: center; margin-top: 40px; color: #888; font-size: 14px; }
   </style>
 </head>
 <body>
-  <h1>📈 Real-Time TradeBot Dashboard</h1>
+  <div class="container">
+    <h1>🚀 Real-Time TradeBot Dashboard</h1>
+    <p>System Status: <strong style="color:green;">Running</strong></p>
+    <div class="alert">
+      Latest Alert:<br>
+      <strong>Ticker:</strong> AAPL<br>
+      <strong>Headline:</strong> Apple announces breakthrough in AI technology<br>
+      <strong>Sentiment:</strong> Bullish (0.60)<br>
+      <strong>Strike:</strong> 185<br>
+      <strong>Price:</strong> $3.25
+    </div>
 
-  <div class="section">
-    <h2>Health Check</h2>
-    <p>Server Status: <strong>Healthy</strong></p>
-    <p>Last Checked: <span id="timestamp">Loading...</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Ticker</th>
+          <th>Avg Sentiment</th>
+          <th>Last Alert</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>AAPL</td>
+          <td>+0.45</td>
+          <td>Today @ 9:35am</td>
+        </tr>
+        <tr>
+          <td>TSLA</td>
+          <td>-0.20</td>
+          <td>Yesterday</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="footer">
+      &copy; 2025 RealTimeTradeBot &mdash; Powered by Flask + Telegram
+    </div>
   </div>
-
-  <div class="section">
-    <h2>Tracked Tickers</h2>
-    <pre id="tickers">Loading...</pre>
-  </div>
-
-  <div class="section">
-    <h2>Endpoints</h2>
-    <ul>
-      <li><code>/health</code> – API health status</li>
-      <li><code>/telegram/list_tickers</code> – List current tickers</li>
-      <li><code>/telegram/add_ticker_TSLA</code> – Add TSLA</li>
-      <li><code>/telegram/remove_ticker_TSLA</code> – Remove TSLA</li>
-      <li><code>/test/mock_alert</code> – Trigger test alert</li>
-    </ul>
-  </div>
-
-  <script>
-    fetch('/health')
-      .then(res => res.json())
-      .then(data => {
-        document.getElementById('timestamp').textContent = data.timestamp;
-      });
-
-    fetch('/telegram/list_tickers')
-      .then(res => res.json())
-      .then(data => {
-        document.getElementById('tickers').textContent = data.result;
-      });
-  </script>
 </body>
 </html>
