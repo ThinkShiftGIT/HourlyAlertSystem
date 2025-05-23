@@ -1,13 +1,7 @@
 Flask==2.3.3
 APScheduler==3.10.4
-feedparser==6.0.11
 requests==2.31.0
 vaderSentiment==3.3.2
 tenacity==8.2.3
 waitress==2.1.2
 python-dotenv==1.0.1
-yfinance==0.2.37
-beautifulsoup4==4.13.4
-html5lib==1.1
-pandas==2.2.3
-lxml==5.4.0

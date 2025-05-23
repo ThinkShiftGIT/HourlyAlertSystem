@@ -19,17 +19,23 @@ app = Flask(__name__)
 
 # === Environment Variables ===
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-TELEGRAM_CHAT_IDS = os.getenv("TELEGRAM_CHAT_IDS", "1654552128").split(",")
+telegram_chat_ids_str = os.getenv("TELEGRAM_CHAT_IDS")
+TELEGRAM_CHAT_IDS = telegram_chat_ids_str.split(",") if telegram_chat_ids_str else []
 POLYGON_API_KEY = os.getenv("POLYGON_API_KEY")
 MARKETAUX_API_KEY = os.getenv("MARKETAUX_API_KEY")
 SCAN_INTERVAL_MINUTES = int(os.getenv("SCAN_INTERVAL_MINUTES", 15))
 SENTIMENT_THRESHOLD = float(os.getenv("SENTIMENT_THRESHOLD", 0.6))
 
 # === Tickers to Monitor ===
-TICKERS = [
+DEFAULT_TICKERS = [
     "NVDA", "TSLA", "AAPL", "AMZN", "PLTR", "AMD", "SMCI", "HIMS", "F", "LCID",
     "UPST", "RIVN", "MSFT", "BAC", "SOFI", "NU", "HOOD", "MARA", "PLUG", "QBTS"
 ]
+tickers_str = os.getenv("MONITORED_TICKERS")
+if tickers_str:
+    TICKERS = [ticker.strip() for ticker in tickers_str.split(",") if ticker.strip()]
+else:
+    TICKERS = DEFAULT_TICKERS
 
 # === Alert Cache ===
 sent_hashes = deque(maxlen=100)
@@ -125,12 +131,19 @@ def scan_and_alert():
                 try:
                     with open("alerts.json", "r") as f:
                         existing = json.load(f)
-                except:
+                except FileNotFoundError:
+                    existing = []
+                    logger.info("alerts.json not found, starting with an empty list.")
+                except json.JSONDecodeError:
+                    logger.error("Error decoding alerts.json, starting with an empty list.")
                     existing = []
 
                 existing.append(alert)
-                with open("alerts.json", "w") as f:
-                    json.dump(existing[-100:], f, indent=2)
+                try:
+                    with open("alerts.json", "w") as f:
+                        json.dump(existing[-100:], f, indent=2)
+                except (IOError, OSError) as e:
+                    logger.error(f"Error writing to alerts.json: {e}")
 
                 msg = f"""
 🚨 *Trade Alert: {ticker}*
@@ -166,8 +179,12 @@ def get_alerts():
         with open("alerts.json", "r") as f:
             alerts = json.load(f)
         return jsonify(alerts)
-    except Exception as e:
-        return jsonify({"error": str(e)})
+    except FileNotFoundError:
+        logger.info("alerts.json not found in get_alerts.")
+        return jsonify({"error": "No alerts found."}), 404
+    except json.JSONDecodeError:
+        logger.error("Error decoding alerts.json in get_alerts.")
+        return jsonify({"error": "Error reading alerts data."}), 500
 
 @app.route("/trigger_scan")
 def trigger_scan():
