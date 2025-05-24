@@ -1,10 +1,31 @@
 # Python-generated files
 __pycache__/
 *.py[oc]
+*.pyd
 build/
 dist/
 wheels/
 *.egg-info
 
 # Virtual environments
+env/
+venv/
 .venv
+
+# Instance folder
+instance/
+
+# Log files
+logs.txt
+*.log
+
+# Environment files
+.env
+.env.*
+!/.env.example
+
+# IDE specific
+.Python
+
+# Database files
+*.sqlite3
